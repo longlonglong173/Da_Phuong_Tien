@@ -13,7 +13,7 @@ const button = document.getElementById('btn')    //nút bắt đầu hoặc kế
 var score = 0   //biến tính điểm
 // player
 
-// đclass người chơi
+// khai báo class người chơi
 class Player {
     constructor(x, y, radius, color) {
         this.x = x
@@ -32,7 +32,7 @@ class Player {
 
 }
 
-//đường đạn
+// khai báo class đường đạn
 class Projectile {
     constructor(x, y, radius, color, velocity) {
         this.x = x
@@ -55,7 +55,7 @@ class Projectile {
     }
 }
 
-//quân địch
+//khai báo class quân địch
 class Enemy {
     constructor(x, y, radius, color, velocity) {
         this.x = x
