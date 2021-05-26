@@ -1,16 +1,15 @@
-const canvas = document.getElementById("canvas");
-const c = canvas.getContext("2d");
-var isStart = false;
-var listImg = []
-var endTableColor = "#fcef87";
-var endText = "#E37332";
+const canvas = document.getElementById("canvas");  // get element canvas từ html
+const c = canvas.getContext("2d"); // set bối cảnh 
+var isStart = false; // biến set xem bắt đầu hay chưa
+var listImg = []   // mảng lưu tất cả các ảnh của game
+var endTableColor = "#fcef87";  // màu sắc của bảng khi kết thúc game
+var endText = "#E37332";  // màu chứ  khi kết thúc game
 
 // start game
-const startGameImg = document.querySelector('#start-game img');
-console.log(startGameImg)
-startGameImg.src = "./image/start-game.png";
-listImg.push(startGameImg)
-var startGameBtn = document.querySelectorAll('#start-game button')
+const startGameImg = document.querySelector('#start-game img'); // get element ảnh khi bắt đầu game
+startGameImg.src = "./image/start-game.png";    // set đường dẫn ảnh cho phần tử
+listImg.push(startGameImg)  // thêm ảnh vào mảng 
+var startGameBtn = document.querySelectorAll('#start-game button')  // get element nút bắt đầu game
 
 // Background:
 const backgroundImg = new Image();
@@ -63,7 +62,7 @@ birdImg_down.src = "./image/bird-down.png";
 listImg.push(birdImg_down);
 
 //Sound:
-const FLAP = new Audio();
+const FLAP = new Audio();   
 FLAP.src = "./audio/sfx_flap.wav";
 
 const DIE = new Audio();
@@ -86,10 +85,11 @@ let btn_start_game = document.getElementById("btn_start-game");
 let btn_play_again = document.getElementById("btn_play-again");
 let btn_exit = document.getElementById("btn_exit");
 
+// nút bắt đầu game
 btn_start_game.addEventListener("click", function () {
     isStart = true;
-    start_game.style.display = "none";
-    play_game.style.display = "block";
+    start_game.style.display = "none"; // ẩn background bắt đầu game
+    play_game.style.display = "block";  // hiển thị lên màn chơi game
     animate();
 })
 
@@ -99,18 +99,19 @@ btn_play_again.addEventListener("click", function () {
     end_game.style.display = "none";
     start_game.style.display = "none";
     play_game.style.display = "block";
-    bird.rotation = 0;
-    background.arr = [];
-    background.score = 0;
-    bird.speed = 0;
-    background.current = background.ready;
+    bird.rotation = 0;  //reset lại hướng xoay của chim
+    background.arr = []; //reset lại mảng
+    background.score = 0; //reset điểm
+    bird.speed = 0; // reset lại tốc độ
+    background.current = background.ready;  // chuyển về màn hình chuẩn bị
 })
-
+//event thoát 
 btn_exit.addEventListener("click", function () {
     isStart = false;
     window.location.reload();
 })
 
+//khai báo class bird
 class Bird {
     constructor(x, y) {
         this.x = x;
@@ -120,31 +121,31 @@ class Bird {
         this.radius = 12;
 
         this.gravity = 0.25; // Trọng lực
-        this.jump = 4.6;
-        this.speed = 0;
+        this.jump = 4.6;  // bước nhảy 
+        this.speed = 0; // tốc độ
 
         this.frame = 0; // Frame theo chuyển động con chim
         this.frames = 0; // Frames theo số khung hình
-        this.period = 10;
+        this.period = 10; //số frame trong 1 giai đoạn
         this.animation = [birdImg_up, birdImg, birdImg_down, birdImg];
 
-        this.degree = Math.PI / 180;
-        this.rotation = 0;
+        this.degree = Math.PI / 180;  // chuyển từ độ sang radian
+        this.rotation = 0;  // độ quay
     }
     draw() {
         let bird_animation = this.animation[this.frame];
-        c.save();
-        c.translate(this.x, this.y);
-        c.rotate(this.rotation);
-        c.drawImage(bird_animation, -this.width / 2, -this.height / 2, this.width, this.height);
-        c.restore();
+        c.save();   // lưu vào stack
+        c.translate(this.x, this.y); // chuyển sang vị trí tiếp theo
+        c.rotate(this.rotation);  // đổi độ xoay của chim
+        c.drawImage(bird_animation, -this.width / 2, -this.height / 2, this.width, this.height); // vẽ 
+        c.restore();  //hiện trạng thái trên cùng của stack, khôi phục bối  cảnh tới trạng thái đó
     }
     flap() {
-        this.speed = -this.jump;
+        this.speed = -this.jump; // thay đổi tốc độ khi bay
     }
     update() {
         if (background.current == background.game) {
-            this.period = 5;
+            this.period = 5;   // thay đổi số frame trong 1 giai đoạn
         }
         // Tăng frame lên 1 theo mỗi giai đoạn
         this.frame += this.frames % this.period == 0 ? 1 : 0;
@@ -152,10 +153,10 @@ class Bird {
         this.frame = this.frame % this.animation.length;
 
         if (background.current == background.ready) {
-            this.y = canvas.height / 4;
+            this.y = canvas.height / 4; //xác định vị trí lúc bắt đầu của chim
         } else {
-            this.speed += this.gravity;
-            this.y += this.speed;
+            this.speed += this.gravity;   // cập nhật lại tốc độ khi bay
+            this.y += this.speed; // cập nhật lại vị trí mới
 
             if (this.y + this.height / 2 >= canvas.height - background.heightGround) {
                 this.y = canvas.height - background.heightGround - this.height / 2;
@@ -174,6 +175,7 @@ class Bird {
         }
     }
 }
+
 
 class Background {
     constructor(x, y, width, height) {
@@ -223,11 +225,11 @@ class Background {
                 y: this.maxYPipe * (Math.random() + 1) // Toạ độ Y nằm trong khoảng xấp xỉ -160 đến -320
             });
         }
+        //duyệt tất cả các ống
         for (let i = 0; i < this.arr.length; i++) {
-            let p = this.arr[i];
-
-            let bottomPipeY = p.y + this.heightPipe + this.gap;
-
+            let p = this.arr[i]
+            let bottomPipeY = p.y + this.heightPipe + this.gap; // tọa độ y của ống dưới
+            // xet lúc va chạm vơi ống
             if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.widthPipe
                 && bird.y + bird.radius > p.y && bird.y - bird.radius < p.y + this.heightPipe) {
                 this.current = this.over;
@@ -239,7 +241,6 @@ class Background {
                 this.current = this.over;
                 HIT.play();
             }
-
             p.x -= this.dxPipe; // Di chuyển ống
 
             // Xoá ống trong mảng khi di chuyển ra khỏi màn hình
@@ -250,6 +251,7 @@ class Background {
             }
         }
     }
+    //vẽ ống
     drawPipe() {
         for (let i = 0; i < this.arr.length; i++) {
             let p = this.arr[i];
@@ -263,6 +265,7 @@ class Background {
             c.drawImage(pipe_bottom, p.x, botYPipe, this.widthPipe, this.heightPipe);
         }
     }
+    //hiển thị điểm
     drawScore() {
         c.beginPath();
         c.fillStyle = "white";
@@ -317,15 +320,15 @@ class Background {
     }
 }
 
-let bird = new Bird(50, canvas.height / 4);
-let box = document.querySelector('.box');
-let background = new Background(0, 0, 900, 500);
+let bird = new Bird(50, canvas.height / 4); // khởi tạo đối tượng chim
+let box = document.querySelector('.box');  //get elemnet của cả màn game
+let background = new Background(0, 0, 900, 500);  //tạo background
 
 
-//sự kiện bấm 
+//sự kiện click chuột
 canvas.addEventListener('click', function () {
     // listImg[0].setAttribute('filter', 'grayscale(100%)')
-    backgroundImg.setAttribute('filter', 'grayscale(100%)')
+    // backgroundImg.setAttribute('filter', 'grayscale(100%)')
     switch (background.current) {
         case background.ready:
             background.current = background.game;
@@ -337,11 +340,10 @@ canvas.addEventListener('click', function () {
             break;
     }
 })
-canvas.addEventListener('mouseover', function () {
-    backgroundImg.setAttribute('filter', 'grayscale(100%)');
-    console.log("hover")
-})
-
+// canvas.addEventListener('mouseover', function () {
+//     backgroundImg.setAttribute('filter', 'grayscale(100%)');
+// })
+// event bấm phím để chơi
 document.addEventListener('keydown', function () {
     if (isStart) {
         switch (background.current) {
@@ -357,6 +359,7 @@ document.addEventListener('keydown', function () {
     }
 })
 
+
 function animate() {
     c.clearRect(0, 0, canvas.width, canvas.height);
     background.draw();
@@ -371,17 +374,18 @@ function animate() {
 
     bird.frames++;
 
+    //khi game over thì chuyển sang màn hình end game
     if (background.current == background.over) {
         end_game.style.display = "block";
         background.transcript();
     }
-    requestAnimationFrame(animate);
+    requestAnimationFrame(animate); //làm mới màn hình sau mỗi lần quét 
 }
 
 //xu ly anh
 
-var mode = 0;
-var changeModeBTN = document.getElementById('changeMode')
+var mode = 0;  // mode hiển thi ảnh gốc hay ảnh đã chỉnh sửa
+var changeModeBTN = document.getElementById('changeMode')  // get element nút thay đổi chế độ
 
 function tintImage(imgElement, tintColor) {
     var cv = document.createElement("canvas")
@@ -396,10 +400,10 @@ function tintImage(imgElement, tintColor) {
     var ctx = cv.getContext("2d");  // định dạng
     ctx.drawImage(imgElement, 0, 0);      //thêm ảnh tại vị trí  0 0 
 
-    var map = ctx.getImageData(0, 0, newImg.width, newImg.height);  // kích thước của ảnh sau khi sửa
-    var imdata = map.data;
+    var map = ctx.getImageData(0, 0, newImg.width, newImg.height);  // lấy dữ liệu ảnh sau khi sửa
+    var imdata = map.data;  
 
-    // convert image to grayscale
+    // chỉnh ảnh sang xám
     var r, g, b, avg;
     for (var p = 0, len = imdata.length; p < len; p += 4) {
         r = imdata[p];
@@ -412,16 +416,16 @@ function tintImage(imgElement, tintColor) {
 
     ctx.putImageData(map, 0, 0);
 
-    // overlay filled rectangle using lighter composition
-    ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = 0.5;
-    ctx.fillStyle = tintColor;
-    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.globalCompositeOperation = "lighter"; // phủ ảnh với 1 lớp 
+    ctx.globalAlpha = 0.5; // độ rõ nét
+    ctx.fillStyle = tintColor;  //phủ màu
+    ctx.fillRect(0, 0, cv.width, cv.height);  // phủ full ảnh với 
 
-    // replace image source with cv data
-    imgElement.src = cv.toDataURL();
+    
+    imgElement.src = cv.toDataURL();  // thay thế ảnh với nội dung ảnh của canvas cv bên trên
 }
 
+//event cho nút thay đổi chế độ ảnh
 changeModeBTN.addEventListener('click', function () {
     if (mode == 0) {
         for (var index = 0; index < listImg.length; index++) {
@@ -439,6 +443,7 @@ changeModeBTN.addEventListener('click', function () {
         }
         mode = 1;
     }
+    //reset lại tất  cả đường dẫn của ảnh
     else if (mode == 1) {
         startGameImg.src = "./image/start-game.png";
         backgroundImg.src = "./image/background.png";
@@ -455,6 +460,7 @@ changeModeBTN.addEventListener('click', function () {
         birdImg_down.src = "./image/bird-down.png";
         endTableColor = "#fcef87";
         endText = "#E37332";
+        //reset lại các nút
         for (var index = 0; index < startGameBtn.length; index++){
             startGameBtn[index].style.backgroundColor = "#5C8C2B"
             startGameBtn[index].style.border = "solid 2px #82B8D9"
@@ -462,6 +468,5 @@ changeModeBTN.addEventListener('click', function () {
         }
         mode = 0;
     }
-    console.log("OK")
 })
 
