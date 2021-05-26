@@ -1,0 +1,25 @@
+{
+  "name": "game-ban-sung",
+  "version": "1.0.0",
+  "description": "game ban sung",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/longlonglong173/game_ban_sung.git"
+  },
+  "keywords": [
+    "game"
+  ],
+  "author": "Long",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/longlonglong173/game_ban_sung/issues"
+  },
+  "homepage": "https://github.com/longlonglong173/game_ban_sung#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
