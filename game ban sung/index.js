@@ -11,13 +11,23 @@ const box = document.getElementById('box');  //element hiển thị bảng khi b
 const scoreBox = document.getElementById('score') //element hiển thị điểm trên bảng
 const button = document.getElementById('btn')    //nút bắt đầu hoặc kết thúc game
 var score = 0   //biến tính điểm
-// player
+var isStart = false
 
-<<<<<<< HEAD
-// đclass người chơi
-=======
+
+// âm thanh
+const SHOOT = new Audio()
+SHOOT.src = '/sound/shoot.wav'
+SHOOT.volume = 0.2
+
+const HIT = new Audio()
+HIT.src = '/sound/hit.wav'
+HIT.volume = 0.2
+
+const BOOM = new Audio()
+BOOM.src = '/sound/boom.wav'
+
+
 // khai báo class người chơi
->>>>>>> 7b65eeb6c2b4d77a4a0e9a8b0d2d6bf8f85464cf
 class Player {
     constructor(x, y, radius, color) {
         this.x = x
@@ -33,20 +43,21 @@ class Player {
         ctx.fillStyle = this.color  //màu cho người chơi
         ctx.fill()   // vẽ
     }
-
+    animateAround() {
+        for (let i = 0; i < 100; i++) {
+            const radius = (Math.random() * 2) + 1
+            particles2.push(new Particle2(canvas.width/2, canvas.height / 2, Math.random() * Math.PI * 2 , randomColor(colors)))
+        }
+    }
 }
 
-<<<<<<< HEAD
-//đường đạn
-=======
 // khai báo class đường đạn
->>>>>>> 7b65eeb6c2b4d77a4a0e9a8b0d2d6bf8f85464cf
 class Projectile {
     constructor(x, y, radius, color, velocity) {
         this.x = x
         this.y = y
         this.radius = radius  // bán kính
-        this.color = color 
+        this.color = color
         this.velocity = velocity  // vạn tốc
     }
     draw() {
@@ -63,11 +74,7 @@ class Projectile {
     }
 }
 
-<<<<<<< HEAD
-//quân địch
-=======
 //khai báo class quân địch
->>>>>>> 7b65eeb6c2b4d77a4a0e9a8b0d2d6bf8f85464cf
 class Enemy {
     constructor(x, y, radius, color, velocity) {
         this.x = x
@@ -82,12 +89,15 @@ class Enemy {
         ctx.fillStyle = this.color
         ctx.fill()
     }
+    
 
     update() {
         this.draw()
         this.x = this.x + this.velocity.x
         this.y = this.y + this.velocity.y
     }
+    
+
 }
 
 const friction = 0.99 //tốc độ làm chậm hiệu ứng nổ   
@@ -135,8 +145,75 @@ function init() {
     projectiles = []
     enemies = []
     particles = []
+    particles2 = []
+    isStart = false
 }
 
+const mouse = {
+    x: innerWidth / 2,
+    y: innerHeight / 2
+}
+
+const colors = [
+    '#00bdff',
+    '#4d39ce',
+    '#088eff',
+]
+
+function randomIntFromRange(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+function randomColor(colors) {
+    return colors[Math.floor(Math.random() * colors.length)]// random ngẫu nhiên màu trong  mảng colors 
+}
+class Particle2 {
+    constructor(x, y, radius, color) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.radians = Math.random() * Math.PI * 2;
+        this.velocity = 0.001; //tốc độ 
+        this.distanceFromCenter = randomIntFromRange(30, canvas.width > canvas.height ? canvas.width/2 : canvas.height / 2)  // random khoảng cách từ tâm
+        this.lastMouse = {
+            //lưu vế chuột
+            x: x,
+            y: y
+        }
+        
+        this.update = () => {
+            const lastPoint = {
+                //lưu vết điểm vừa vẽ
+                x: this.x,
+                y: this.y
+            }
+            this.radians += this.velocity
+            
+            //hiệu ứng di chuột
+            this.lastMouse.x += (mouse.x - this.lastMouse.x) * 0.001
+            this.lastMouse.y += (mouse.y - this.lastMouse.y) * 0.001
+            //làm cho điểm chạy theo thời gian
+            this.x = this.lastMouse.x + Math.cos(this.radians) * this.distanceFromCenter;
+            this.y = this.lastMouse.y + Math.sin(this.radians) * this.distanceFromCenter;
+            this.draw(lastPoint );
+        };
+        this.draw = lastPoint => {
+            ctx.beginPath()
+            // ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
+            // ctx.fillStyle = this.color
+            // ctx.fill()
+            ctx.strokeStyle = this.color
+            ctx.lineWidth = this.radius
+            ctx.moveTo(lastPoint.x, lastPoint.y)
+            ctx.lineTo(this.x, this.y)
+            ctx.stroke()
+            ctx.closePath()
+        };
+    }
+}
+
+let particles2 = [] //mảng lưu lại những viên quanh đốip tượng đang xét
 // hàm khởi tạo quân địch
 function spawnEnemy() {
     //setinerval là để gọi hàm sau một khoảng thời gian nhất định
@@ -147,20 +224,20 @@ function spawnEnemy() {
         //random tọa độ của quân địch được xuất hiện từ các cạnh của bàn hình
         if (Math.random() < 0.5) {
             x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius  // sử dụg toán tử 3 ngôi
-            y = Math.random() * canvas.height 
+            y = Math.random() * canvas.height
         } else {
             x = Math.random() * canvas.width
             y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius
         }
         const color = `hsl(${Math.random() * 360}, 50%, 50%)`  //random màu sắc của quân địch
         const angle = Math.atan2(yCenter - y, xCenter - x)  // tính góc của quân địch được random so với trục x
-                                                            // phương của quân địch luôn  hướng về người chơi(giữa màn hình)
+        // phương của quân địch luôn  hướng về người chơi(giữa màn hình)
         const velocity = {
             x: Math.cos(angle),  //tính độ dài trục x của vận tốc
             y: Math.sin(angle)   //.....
         }
-
-        enemies.push(new Enemy(x, y, radius, color, velocity))  // thêm quân địch vừa tạo bên trên vào mảng đã khai báo
+        let abc = new Enemy(x, y, radius, color, velocity)
+        enemies.push(abc)  // thêm quân địch vừa tạo bên trên vào mảng đã khai báo
     }, 1000)
 
 }
@@ -179,6 +256,10 @@ function animate() {
             particle.update()   // cập nhật lại viên hiệu ứng
         }
     })
+    //xét hiệu ứng xung quanh viên đạn
+    particles2.forEach(particle => {
+        particle.update()
+    })
     //xet mảng đạn bắn ra
     projectiles.forEach((projectile, index) => {
         projectile.update()     //cập nhật lại viên đạn
@@ -188,7 +269,7 @@ function animate() {
             || projectile.x - projectile.radius > canvas.width
             || projectile.y - projectile.radius > canvas.height) {
             setTimeout(() => {
-                projectiles.splice(index, 1) 
+                projectiles.splice(index, 1)
             }, 0);
         }
     })
@@ -203,7 +284,7 @@ function animate() {
             scoreLabel.innerHTML = 0; // set lại điểm trên góc màn hình
             scoreBox.innerHTML = score;  //set text cho số điểm
             score = 0;   //reset lại số điểm 
-            
+            isStart = false
         }
         enemy.update()
         projectiles.forEach((pro, index2) => {
@@ -214,6 +295,8 @@ function animate() {
                 score += Math.round(enemy.radius) // tính điểm khi bắn trúng địch
                 scoreLabel.innerHTML = `${score}`  //cập nhật lại điểm trên góc màn hình
                 // hiệu ứng nổ
+                HIT.play()
+                HIT.currentTime = 0
                 for (let i = 0; i < enemy.radius; i++) {
                     particles.push(new Particle(pro.x, pro.y, Math.random() * 3, enemy.color, {
                         //Math.random() * 3 là random bán kính của viên hiệu ứng nổ, màu trùng với màu quân địch bị bắn
@@ -223,6 +306,7 @@ function animate() {
                 }
                 if (enemy.radius - 10 >= 10) {
                     //thư viện gsap để làm cho hiệu ứng khi bị bắn quân địch nhỏ lại trông mượt hơn
+                    
                     gsap.to(enemy, {
                         radius: enemy.radius - 10  // giảm bán kính sau mỗi lần bị bắn
                     })
@@ -234,6 +318,8 @@ function animate() {
                 else {
                     //set time out ở đây dùng để cho lúc va chạm nó k bị chớp
                     setTimeout(() => {
+                        BOOM.play()
+                        BOOM.currentTime = 0
                         enemies.splice(index, 1)  // loại bỏ đối tượng bị bắn ra khỏi  mảng
                         projectiles.splice(index2, 1) // loại bỏ viên đạn khi va cham ra khỏi mảng
                     }, 0);
@@ -244,16 +330,22 @@ function animate() {
 }
 
 player.draw()   // vẽ người chơi khi bắt đầu
+player.animateAround()
 //set event click trên màn hình
 window.addEventListener('click', function (e) {
     //tính góc của đường đạn so với trục x
-    const angle = Math.atan2(e.clientY - yCenter, e.clientX - xCenter)
-    const velocity = {
-        x: Math.cos(angle) * 5,
-        y: Math.sin(angle) * 5,
+    if (isStart == true) {
+        const angle = Math.atan2(e.clientY - yCenter, e.clientX - xCenter)
+        const velocity = {
+            x: Math.cos(angle) * 5,
+            y: Math.sin(angle) * 5,
+        }
+        // sau mỗi lần click thì thêm 1 viên đạn vào mảng
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity))
+        SHOOT.play()
+        SHOOT.currentTime = 0;       
     }
-    // sau mỗi lần click thì thêm 1 viên đạn vào mảng
-    projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity))
+    isStart = true;
 })
 
 //nút start/ restart lại game
@@ -262,5 +354,6 @@ button.addEventListener('click', () => {
     box.style.display = 'none'  // ẩn box khi bấm nút
     animate()  // bắt đầu hiệu ứng chính  cúa game
     spawnEnemy()  // tạo quân địch
+    player.animateAround()
 })
 
