@@ -3,6 +3,7 @@
     * {
         margin: 0;
         box-sizing: border-box;
+        scroll-behavior: none;
         
     }
     body {
@@ -15,7 +16,6 @@
         position: fixed;
         padding-top: 20px;
         padding-left: 20px;
-        scroll-behavior: none;
     }
     #scoreLabel > span{
         color: white;
@@ -64,6 +64,11 @@
      p {
          color: #333;
      }
+     #playerImg{
+        display: none;
+        width: 40px;
+        height: 40px;
+     }
 </style> 
 <div id="scoreLabel"><span>Score: </span> <span>0</span></div>
 <div id="box">
@@ -75,9 +80,8 @@
 </div>
 
 <canvas>
-    
 </canvas>
+<img alt="" id="playerImg">
 <canvas id = "cv2"></canvas>
-<!-- <img src="img/spaceship.png" alt="" id="playerImg"> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.5.1/gsap.min.js" integrity="sha512-IQLehpLoVS4fNzl7IfH8Iowfm5+RiMGtHykgZJl9AWMgqx0AmJ6cRWcB+GaGVtIsnC4voMfm8f2vwtY+6oPjpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="index.js"></script>

@@ -1,5 +1,3 @@
-
-console.log(gsap)
 const canvas = document.querySelector('canvas');  //lấy element canvas bên file html
 const ctx = canvas.getContext('2d'); //set bối cảnh dạng 2d
 
@@ -14,9 +12,19 @@ const button = document.getElementById('btn')    //nút bắt đầu hoặc kế
 var score = 0   //biến tính điểm
 var isStart = false
 const degree = Math.PI / 180
-// let img = document.getElementById('playerImg')
-let img = new Image()
-img.src = 'img/spaceship.png'
+let spaceshipImg = document.getElementById('playerImg')
+let angleM = -90 * (Math.PI / 180)   // góc xoay của đường đạn so với trục x
+console.log(angleM)
+// let img = new Image()
+spaceshipImg.src = 'img/spaceship.png'
+
+function drawRotated(degrees){
+    ctx.save();
+    ctx.translate(canvas.width/2,canvas.height/2);
+    ctx.rotate(degrees);
+    ctx.drawImage(spaceshipImg,-40,-40, 80, 80);
+    ctx.restore();
+}
 let minSizeEnemy = 7
 let maxSizeEnemy = 30
 
@@ -50,21 +58,9 @@ class Player {
         this.y = y
         this.radius = radius
         this.color = color
-        this.rotation = 45
     }
 
-    //vẽ người chơi
-    draw() {
-        ctx.beginPath; //bắt đầu vẽ
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false); //vẽ đường tròn
-        ctx.fillStyle = this.color  //màu cho người chơi
-        ctx.fill()   // vẽ
-
-    }
-    update() {
-        this.rotation += 0.1;
-        this.draw()
-    }
+    //tạo animation space với trung tâm là người chơi
     animateAround() {
         for (let i = 0; i < 300; i++) {
             const radius = (Math.random() * 2) + 1
@@ -259,11 +255,11 @@ function spawnEnemy(sizeMin, sizeMax) {
 
 let animationId
 function animate() {
-    animationId = requestAnimationFrame(animate) // phương thức này làm mới màn hình sau mỗi lần quét 
+    drawRotated(angleM)
+        animationId = requestAnimationFrame(animate) // phương thức này làm mới màn hình sau mỗi lần quét 
     ctx.fillStyle = 'rgba(0,0,0,0.1)'  // đổ màu nền và làm hiệu ứng mờ nhờ hệ số alpha (0,1)
     ctx.fillRect(0, 0, canvas.width, canvas.height)  //vẽ màn hình game
     // player.draw()  //vẽ người chơi
-    player.update()
     //xét hiệu ứng lúc va chạm sẽ tỏa ra 
     particles.forEach((particle, index) => {
         if (particle.alpha <= 0) {
@@ -342,15 +338,20 @@ function animate() {
                 }
             }
         })
-    })
+    })  
 }
 
-player.draw()   // vẽ người chơi khi bắt đầu
 player.animateAround()
+
+addEventListener('mousemove', (e) => {
+    const angle = Math.atan2(e.clientY - yCenter, e.clientX - xCenter)  // góc giữu đường đạn và trục x
+    angleM = angle + Math.PI/2
+})
 //set event click trên màn hình
 window.addEventListener('click', function (e) {
     //tính góc của đường đạn so với trục x
     if (isStart == true) {
+        const projectileRadius = 10
         const angle = Math.atan2(e.clientY - yCenter, e.clientX - xCenter)  // góc giữu đường đạn và trục x
         const velocity = {
             x: Math.cos(angle) * 5,
@@ -390,63 +391,63 @@ window.addEventListener('click', function (e) {
         }
         if (score < 1000) {
             //1
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
             minSizeEnemy = 10
             maxSizeEnemy = 35
         } else if (score >= 1000 && score < 2000) {
             //2
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
             timeToRespawnEnemy = 800
             minSizeEnemy = 15
             maxSizeEnemy = 45
         } else if (score >= 2000 && score < 3000) {
             //3
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2r))
-            timeToRespawnEnemy = 600
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+            timeToRespawnEnemy = 700
             minSizeEnemy = 20
             maxSizeEnemy = 55
         } else if (score >= 3000 && score < 4000) {
             //4
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity3l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity3r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
             timeToRespawnEnemy =500
             minSizeEnemy = 20
             maxSizeEnemy = 60
         } else if (score >= 4000 && score < 5000) {
             //5
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity3l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity3r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
             timeToRespawnEnemy = 400
             minSizeEnemy = 25
             maxSizeEnemy = 70
         } else if (score >= 5000 && score < 6000) {
             //6
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity3l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity3r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity4l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity4r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4r))
             timeToRespawnEnemy = 250
             minSizeEnemy = 25
             maxSizeEnemy = 75
         } else if (score >= 6000) {
             //7
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity2r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity3l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity3r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity4l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'white', velocity4r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4l))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4r))
             timeToRespawnEnemy = 100
             minSizeEnemy = 20
             maxSizeEnemy = 100

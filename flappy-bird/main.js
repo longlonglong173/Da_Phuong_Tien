@@ -42,7 +42,7 @@ medal_2.src = "./image/medal-2.png";
 
 const medal_3 = new Image();
 medal_3.src = "./image/medal-3.png";
-// listImg.push(medal_3);
+    // listImg.push(medal_3);
 
 const medal_4 = new Image();
 medal_4.src = "./image/medal-4.png";
@@ -77,8 +77,8 @@ HIT.src = "./audio/sfx_hit.wav";
 const START = new Audio();
 START.src = "./audio/sfx_swooshing.wav";
 
-let start_game = document.getElementById("start-game");
-let play_game = document.getElementById("play-game");
+let start_game = document.getElementById("start-game");  // phương thức trả về với thuộc tính id được cung cấp sẵn
+let play_game = document.getElementById("play-game");   // hoặc  lấy thông tin từ form, hoặc lây phần tử bất kì
 let end_game = document.getElementById("end-game");
 
 let btn_start_game = document.getElementById("btn_start-game");
@@ -86,7 +86,10 @@ let btn_play_again = document.getElementById("btn_play-again");
 let btn_exit = document.getElementById("btn_exit");
 
 // nút bắt đầu game
-btn_start_game.addEventListener("click", function () {
+btn_start_game.onclick = () => {
+}
+   
+btn_start_game.addEventListener("click",  () => {
     isStart = true;
     start_game.style.display = "none"; // ẩn background bắt đầu game
     play_game.style.display = "block";  // hiển thị lên màn chơi game
@@ -124,8 +127,8 @@ class Bird {
         this.jump = 4.6;  // bước nhảy 
         this.speed = 0; // tốc độ
 
-        this.frame = 0; // Frame theo chuyển động con chim
-        this.frames = 0; // Frames theo số khung hình
+        this.frame = 0; // Frame theo chuyển động con chim***
+        this.frames = 0; // Frames theo số khung hình  ***
         this.period = 10; //số frame trong 1 giai đoạn
         this.animation = [birdImg_up, birdImg, birdImg_down, birdImg];
 
@@ -211,13 +214,11 @@ class Background {
     }
     update() {
         if (this.current == this.game) {
-            this.xGround = (this.xGround - this.dx) % (this.widthGround / 2);
+            this.xGround = (this.xGround - this.dx) % (this.widthGround / 2);//***
         }
-
         if (this.current != this.game) {
             return;
         }
-
         // Tạo toạ độ cho ống
         if (bird.frames % 100 == 0) {
             this.arr.push({
@@ -246,7 +247,7 @@ class Background {
             // Xoá ống trong mảng khi di chuyển ra khỏi màn hình
             if (p.x + this.widthPipe <= 0) {
                 this.arr.shift();
-                this.score++;
+                this.score++; // cộng điểm
                 POINT.play();
             }
         }
@@ -307,6 +308,7 @@ class Background {
             c.font = "normal normal 600 25px sans-serif ";
             c.fillText("MEDAL", canvas.width / 2 + 20, 155);
 
+            // xét huân chương 
             if (this.score >= 20) {
                 c.drawImage(medal_4, canvas.width / 2 + 40, 170);
             } else if (this.score >= 10) {
@@ -326,9 +328,7 @@ let background = new Background(0, 0, 900, 500);  //tạo background
 
 
 //sự kiện click chuột
-canvas.addEventListener('click', function () {
-    // listImg[0].setAttribute('filter', 'grayscale(100%)')
-    // backgroundImg.setAttribute('filter', 'grayscale(100%)')
+addEventListener('click', function () {
     switch (background.current) {
         case background.ready:
             background.current = background.game;
@@ -340,11 +340,9 @@ canvas.addEventListener('click', function () {
             break;
     }
 })
-// canvas.addEventListener('mouseover', function () {
-//     backgroundImg.setAttribute('filter', 'grayscale(100%)');
-// })
+
 // event bấm phím để chơi
-document.addEventListener('keydown', function () {
+addEventListener('keydown', function () {
     if (isStart) {
         switch (background.current) {
             case background.ready:
@@ -361,14 +359,13 @@ document.addEventListener('keydown', function () {
 
 
 function animate() {
-    c.clearRect(0, 0, canvas.width, canvas.height);
+    c.clearRect(0, 0, canvas.width, canvas.height); // xóa màn hình để chuyển sang khung hình mới
     background.draw();
     background.update();
     background.drawPipe();
     background.drawGround();
     background.drawScore();
     background.drawReady();
-
     bird.update();
     bird.draw();
 
@@ -383,7 +380,6 @@ function animate() {
 }
 
 //xu ly anh
-
 var mode = 0;  // mode hiển thi ảnh gốc hay ảnh đã chỉnh sửa
 var changeModeBTN = document.getElementById('changeMode')  // get element nút thay đổi chế độ
 
@@ -395,9 +391,8 @@ function tintImage(imgElement, tintColor) {
     // create hidden canvas (using image dimensions)
     cv.width = newImg.width;
     cv.height = newImg.height;
-    console.log(newImg.width + "-" + newImg.height);
-
     var ctx = cv.getContext("2d");  // định dạng
+    
     ctx.drawImage(imgElement, 0, 0);      //thêm ảnh tại vị trí  0 0 
 
     var map = ctx.getImageData(0, 0, newImg.width, newImg.height);  // lấy dữ liệu ảnh sau khi sửa
@@ -430,7 +425,6 @@ changeModeBTN.addEventListener('click', function () {
     if (mode == 0) {
         for (var index = 0; index < listImg.length; index++) {
             tintImage(listImg[index], "rgba(0,0,0,0.5)")
-            console.log(index)
         }
         endTableColor = '#aaaaaa'
         endText = "#18191a"
