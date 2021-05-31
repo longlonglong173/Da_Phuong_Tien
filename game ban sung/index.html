@@ -1,39 +1,42 @@
 <style>
-
     * {
         margin: 0;
         box-sizing: border-box;
         scroll-behavior: none;
-        
     }
+
     body {
         margin: 0;
         user-select: none;
-        font-family:verdana;
+        font-family: verdana;
         background-color: #333;
     }
-    #scoreLabel{
+
+    #scoreLabel {
         position: fixed;
         padding-top: 20px;
         padding-left: 20px;
     }
-    #scoreLabel > span{
+
+    #scoreLabel>span {
         color: white;
         font-size: 20px;
         user-select: none;
     }
-    #box{
+
+    #box {
         position: absolute;
         width: 100%;
         height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        
     }
-    #nav{
+
+    #nav {
+        padding: 20px;
         width: 650px;
-        height: 250px;
+        height: fit-content;
         background-color: white;
         display: flex;
         justify-content: center;
@@ -42,7 +45,8 @@
         border: #333 solid 2px;
         border-radius: 10px;
     }
-    #nav > div {
+
+    #nav> #btn {
         width: 600px;
         height: 75px;
         background-color: #49e;
@@ -52,36 +56,71 @@
         align-items: center;
         justify-content: center;
         font-size: 30px;
+    }
 
-     }
-     #btn:hover{
-         opacity: 0.8;
-     }
-     h1 {
+    #btn:hover {
+        opacity: 0.8;
+    }
+
+    h1 {
         font-size: 50px;
-        margin: 20px 0 0;
-     }
-     p {
-         color: #333;
-     }
-     #playerImg{
+    }
+
+    p {
+        color: #333;
+        margin: 20px;
+        font-size:20px
+    }
+
+    #playerImg {
         display: none;
         width: 40px;
         height: 40px;
-     }
-</style> 
+    }
+    .spaceShipImg{
+        width: 80px;
+        height: 80px;
+        margin: 10px 40px;
+        padding: 10px;
+        border-radius: 10px;
+        display: block;
+    }
+    #exit-btn{
+        width: 40px;
+        height: 40px;
+        position: absolute;
+        right: 5px;
+        top: 5px;
+        color: white;
+        border-radius: 50%;
+        border: solid 2px orange;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+    }
+
+</style>
 <div id="scoreLabel"><span>Score: </span> <span>0</span></div>
 <div id="box">
     <div id="nav">
-        <h1 id="score">0</h1>
-        <p>Points</p>
+        <div id="exit-btn">X</div>
+        <h3 id="spaceShipTitle">Spaceship</h3>
+        <div style="display: flex">
+            <img src="./img/spaceship1.png" alt="" class="spaceShipImg" id="spaceShip1">
+            <img src="./img/spaceship2.png" alt="" class="spaceShipImg" id="spaceShip2">
+            <img src="./img/spaceship3.png" alt="" class="spaceShipImg" id="spaceShip3">
+        </div>
+        <h1 id="score" >0</h1>
+        <p >Points</p>
         <div id="btn">Start Game</div>
     </div>
 </div>
-
 <canvas>
 </canvas>
 <img alt="" id="playerImg">
-<canvas id = "cv2"></canvas>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.5.1/gsap.min.js" integrity="sha512-IQLehpLoVS4fNzl7IfH8Iowfm5+RiMGtHykgZJl9AWMgqx0AmJ6cRWcB+GaGVtIsnC4voMfm8f2vwtY+6oPjpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<canvas id="cv2"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.5.1/gsap.min.js"
+    integrity="sha512-IQLehpLoVS4fNzl7IfH8Iowfm5+RiMGtHykgZJl9AWMgqx0AmJ6cRWcB+GaGVtIsnC4voMfm8f2vwtY+6oPjpQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="index.js"></script>

@@ -4,19 +4,26 @@ const ctx = canvas.getContext('2d'); //set bối cảnh dạng 2d
 canvas.width = window.innerWidth; //set độ rộng của game = độ rộng màng hình 
 canvas.height = window.innerHeight; //set độ cao của game = độ cao màng hình 
 
-
 const scoreLabel = document.getElementById("scoreLabel").querySelector("span:last-child")    //element hiển thị điểm khi chơi
 const box = document.getElementById('box');  //element hiển thị bảng khi bắt đầu và kết thúc game
 const scoreBox = document.getElementById('score') //element hiển thị điểm trên bảng
 const button = document.getElementById('btn')    //nút bắt đầu hoặc kết thúc game
 var score = 0   //biến tính điểm
+var dmgLocal = 5
 var isStart = false
 const degree = Math.PI / 180
 let spaceshipImg = document.getElementById('playerImg')
 let angleM = -90 * (Math.PI / 180)   // góc xoay của đường đạn so với trục x
 console.log(angleM)
 // let img = new Image()
-spaceshipImg.src = 'img/spaceship.png'
+spaceshipImg.src = 'img/spaceship1.png'
+let typeOfSpaceShip = 1
+const spaceShip1 = document.getElementById('spaceShip1')
+const spaceShip2 = document.getElementById('spaceShip2')
+const spaceShip3 = document.getElementById('spaceShip3')
+const spaceShipTitle = document.getElementById('spaceShipTitle')
+const exitBtn = document.getElementById('exit-btn')
+
 
 function drawRotated(degrees){
     ctx.save();
@@ -30,15 +37,15 @@ let maxSizeEnemy = 30
 
 // âm thanh
 const SHOOT = new Audio()
-SHOOT.src = '/sound/shoot.wav'
+SHOOT.src = './sound/shoot.wav'
 SHOOT.volume = 0.2
 
 const HIT = new Audio()
-HIT.src = '/sound/hit.wav'
+HIT.src = './sound/hit.wav'
 HIT.volume = 0.2
 
 const BOOM = new Audio()
-BOOM.src = '/sound/boom.wav'
+BOOM.src = './sound/boom.wav'
 
 const mouse = {
     x: innerWidth / 2,
@@ -120,7 +127,7 @@ class Enemy {
 
 }
 
-const friction = 0.99 //tốc độ làm chậm hiệu ứng nổ   
+const friction = 0.999 //tốc độ làm chậm hiệu ứng nổ   
 //hiệu ứng nổ
 class Particle {
     constructor(x, y, radius, color, velocity) {
@@ -152,7 +159,7 @@ class Particle {
 
 const xCenter = canvas.width / 2;  //tọa độ của người chơi ở giữa màn hình 
 const yCenter = canvas.height / 2; //....
-let player = new Player(xCenter, yCenter, 10, 'white');  //khởi tạo người chơi
+let player = new Player(xCenter, yCenter, 20, 'white');  //khởi tạo người chơi
 let projectiles = []   // mảng lưu các viên đạn được bắn ra
 let enemies = []        // mảng lưu các quân địch được random trên màng hình
 let particles = []  //mảng lưu các viên hiệu ứng nổ
@@ -176,6 +183,8 @@ function randomIntFromRange(min, max) {
 function randomColor(colors) {
     return colors[Math.floor(Math.random() * colors.length)]// random ngẫu nhiên màu trong  mảng colors 
 }
+
+//vẽ background
 class Particle2 {
     constructor(x, y, radius, color) {
         this.x = x;
@@ -186,11 +195,10 @@ class Particle2 {
         this.velocity = 0.001; //tốc độ 
         this.distanceFromCenter = randomIntFromRange(30, canvas.width > canvas.height ? canvas.width / 2 : canvas.height / 2)  // random khoảng cách từ tâm
         this.lastMouse = {
-            //lưu vế chuột
+            //lưu vết chuột
             x: x,
             y: y
         }
-
         this.update = () => {
             const lastPoint = {
                 //lưu vết điểm vừa vẽ
@@ -198,7 +206,6 @@ class Particle2 {
                 y: this.y
             }
             this.radians += this.velocity
-
             //hiệu ứng di chuột
             this.lastMouse.x += (mouse.x - this.lastMouse.x) * 0.001
             this.lastMouse.y += (mouse.y - this.lastMouse.y) * 0.001
@@ -209,9 +216,6 @@ class Particle2 {
         };
         this.draw = lastPoint => {
             ctx.beginPath()
-            // ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-            // ctx.fillStyle = this.color
-            // ctx.fill()
             ctx.strokeStyle = this.color
             ctx.lineWidth = this.radius
             ctx.moveTo(lastPoint.x, lastPoint.y)
@@ -256,7 +260,7 @@ function spawnEnemy(sizeMin, sizeMax) {
 let animationId
 function animate() {
     drawRotated(angleM)
-        animationId = requestAnimationFrame(animate) // phương thức này làm mới màn hình sau mỗi lần quét 
+    animationId = requestAnimationFrame(animate) // phương thức này làm mới màn hình sau mỗi lần quét 
     ctx.fillStyle = 'rgba(0,0,0,0.1)'  // đổ màu nền và làm hiệu ứng mờ nhờ hệ số alpha (0,1)
     ctx.fillRect(0, 0, canvas.width, canvas.height)  //vẽ màn hình game
     // player.draw()  //vẽ người chơi
@@ -297,6 +301,10 @@ function animate() {
             scoreBox.innerHTML = score;  //set text cho số điểm
             score = 0;   //reset lại số điểm 
             isStart = false
+            spaceShip1.style.display = 'none'
+            spaceShip2.style.display = 'none'
+            spaceShip3.style.display = 'none'
+            spaceShipTitle.style.display = 'none'
         }
         enemy.update()
         projectiles.forEach((pro, index2) => {
@@ -316,11 +324,11 @@ function animate() {
                         y: (Math.random() - 0.5) * (Math.random() * 6)
                     }))
                 }
-                if (enemy.radius - 7 >= 7) {
+                if (enemy.radius - dmgLocal >= dmgLocal) {
                     //thư viện gsap để làm cho hiệu ứng khi bị bắn quân địch nhỏ lại trông mượt hơn
 
                     gsap.to(enemy, {
-                        radius: enemy.radius - 7  // giảm bán kính sau mỗi lần bị bắn
+                        radius: enemy.radius - dmgLocal  // giảm bán kính sau mỗi lần bị bắn
                     })
                     //set time out ở đây dùng để cho lúc va chạm nó k bị chớp
                     setTimeout(() => {
@@ -343,6 +351,7 @@ function animate() {
 
 player.animateAround()
 
+//lấy tọa độ chuột để quay tàu theo hướng chuột
 addEventListener('mousemove', (e) => {
     const angle = Math.atan2(e.clientY - yCenter, e.clientX - xCenter)  // góc giữu đường đạn và trục x
     angleM = angle + Math.PI/2
@@ -351,18 +360,29 @@ addEventListener('mousemove', (e) => {
 window.addEventListener('click', function (e) {
     //tính góc của đường đạn so với trục x
     if (isStart == true) {
-        const projectileRadius = 10
         const angle = Math.atan2(e.clientY - yCenter, e.clientX - xCenter)  // góc giữu đường đạn và trục x
+        if (typeOfSpaceShip == 1) {
+            proOfSpaceship1(angle)
+        } else  if(typeOfSpaceShip == 2){
+            proOfSpaceship2(angle)
+        }
+        else if (typeOfSpaceShip == 3) {
+            proOfSpaceship3(angle)
+        }
+
+    }
+    // console.log("projectiles: " + projectiles)
+})
+
+function proOfSpaceship2(angle) {
+    const projectileRadius = 15
+    dmgLocal = projectileRadius
         const velocity = {
             x: Math.cos(angle) * 5,
             y: Math.sin(angle) * 5,
         }
         //sau mỗi lần 1 viên đạn được tạo thì thêm nó vào mảng prejectiles
-        let wing = 15
-        let wing2 = 30
-        let numOfProjectile = 1
         let angleStep = 4 * (Math.PI / 180)
-        let scoreLevel = 1000
         SHOOT.play()
         SHOOT.currentTime = 0;
         const velocity2l = {
@@ -388,84 +408,485 @@ window.addEventListener('click', function (e) {
         const velocity4r = {
             x: Math.cos(angle + 3*angleStep) * 5,
             y: Math.sin(angle + 3*angleStep) * 5,
-        }
-        if (score < 1000) {
-            //1
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-            minSizeEnemy = 10
-            maxSizeEnemy = 35
-        } else if (score >= 1000 && score < 2000) {
-            //2
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-            timeToRespawnEnemy = 800
-            minSizeEnemy = 15
-            maxSizeEnemy = 45
-        } else if (score >= 2000 && score < 3000) {
-            //3
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-            timeToRespawnEnemy = 700
-            minSizeEnemy = 20
-            maxSizeEnemy = 55
-        } else if (score >= 3000 && score < 4000) {
-            //4
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
-            timeToRespawnEnemy =500
-            minSizeEnemy = 20
-            maxSizeEnemy = 60
-        } else if (score >= 4000 && score < 5000) {
-            //5
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
-            timeToRespawnEnemy = 400
-            minSizeEnemy = 25
-            maxSizeEnemy = 70
-        } else if (score >= 5000 && score < 6000) {
-            //6
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4r))
-            timeToRespawnEnemy = 250
-            minSizeEnemy = 25
-            maxSizeEnemy = 75
-        } else if (score >= 6000) {
-            //7
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4l))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4r))
-            timeToRespawnEnemy = 100
-            minSizeEnemy = 20
-            maxSizeEnemy = 100
-        }
-        // đường đạn song song
-        // setTimeout(() => {
-        //     projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-        //     projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
-        // }, 50);
-        // setTimeout(() => {
-        //     projectiles.push(new Projectile(canvas.width / 2 + wing2 * Math.sin(angle), canvas.height / 2 - wing2 * Math.cos(angle), 5, 'white', velocity))
-        //     projectiles.push(new Projectile(canvas.width / 2 - wing2 * Math.sin(angle), canvas.height / 2 + wing2 * Math.cos(angle), 5, 'white', velocity))
-        // }, 100);
-
     }
-    isStart = true;
-    // console.log("projectiles: " + projectiles)
-})
+    
+    if (score < 1000) {
+        //1
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        minSizeEnemy = 10
+        maxSizeEnemy = 35
+    } else if (score >= 1000 && score < 2000) {
+        //2
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+        timeToRespawnEnemy = 800
+        minSizeEnemy = 15
+        maxSizeEnemy = 45
+    } else if (score >= 2000 && score < 3000) {
+        //3
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+        timeToRespawnEnemy = 600
+        minSizeEnemy = 20
+        maxSizeEnemy = 55
+    } else if (score >= 3000 && score < 4000) {
+        //4
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
+        timeToRespawnEnemy =400
+        minSizeEnemy = 20
+        maxSizeEnemy = 60
+    } else if (score >= 4000 && score < 5000) {
+        //5
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
+        timeToRespawnEnemy = 300
+        minSizeEnemy = 25
+        maxSizeEnemy = 70
+    } else if (score >= 5000 && score < 6000) {
+        //6
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4r))
+        timeToRespawnEnemy = 200
+        minSizeEnemy = 25
+        maxSizeEnemy = 75
+    } else if (score >= 6000) {
+        //7
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4l))
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4r))
+        timeToRespawnEnemy = 100
+        minSizeEnemy = 20
+        maxSizeEnemy = 100
+    }
+}
+
+function proOfSpaceship1(angle) {
+    const projectileRadius = 7
+    dmgLocal = projectileRadius
+        const velocity = {
+            x: Math.cos(angle) * 7,
+            y: Math.sin(angle) * 7,
+        }
+        //sau mỗi lần 1 viên đạn được tạo thì thêm nó vào mảng prejectiles
+        SHOOT.play()
+    SHOOT.currentTime = 0;
+    setTimeout(() => {
+        SHOOT.play()
+        SHOOT.currentTime = 0;
+    }, 100);
+            // đường đạn song song
+        let wing = 15
+    if (score < 1000) {
+        //1
+        console.log("type: 1" )
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        }, 200);
+        minSizeEnemy = 10
+        maxSizeEnemy = 35
+    } else if (score >= 1000 && score < 2000) {
+        //2
+        console.log("type: 2" )
+        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 200);
+        timeToRespawnEnemy = 800
+        minSizeEnemy = 15
+        maxSizeEnemy = 45
+    } else if (score >= 2000 && score < 3000) {
+        //3
+        console.log("type: 3" )
+
+        wing = 20
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 200);
+       timeToRespawnEnemy = 600
+        minSizeEnemy = 20
+        maxSizeEnemy = 55
+    } else if (score >= 3000 && score < 4000) {
+        //4
+        console.log("type: 4" )
+
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius, 'white', velocity))
+        setTimeout(() => {
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius, 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))    
+        }, 150);
+        setTimeout(() => {
+            wing = 7
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 22
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 300);
+        timeToRespawnEnemy =400
+        minSizeEnemy = 20
+        maxSizeEnemy = 60
+    } else if (score >= 4000 && score < 5000) {
+        //5
+        console.log("type: 5")
+        wing = 67
+        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        setTimeout(() => {
+            wing = 52
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 100);
+        setTimeout(() => {
+            wing = 37
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 200);
+        setTimeout(() => {
+            wing = 22
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 300);
+        setTimeout(() => {
+            wing = 7
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 400);
+        timeToRespawnEnemy = 300
+        minSizeEnemy = 25
+        maxSizeEnemy = 70
+    } else if (score >= 5000 && score < 6000) {
+        //6
+        console.log("type: 6")
+        setTimeout(() => {
+            wing = 82
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 500);
+        setTimeout(() => {
+            wing = 67
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 400);
+        setTimeout(() => {
+            wing = 52
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 300);
+        setTimeout(() => {
+            wing = 37
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 200);
+        setTimeout(() => {
+            wing = 22
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 100);
+        setTimeout(() => {
+            wing =7
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 0);
+        timeToRespawnEnemy = 200
+        minSizeEnemy = 25
+        maxSizeEnemy = 75
+    } else if (score >= 6000) {
+        //7
+        console.log("type: 7")
+        setTimeout(() => {
+            wing = 82
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 500);
+        setTimeout(() => {
+            wing = 67
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 7
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 400);
+        setTimeout(() => {
+            wing = 52
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 22
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 300);
+        setTimeout(() => {
+            wing = 37
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 200);
+        setTimeout(() => {
+            wing = 22
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 100);
+        setTimeout(() => {
+            wing =7
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 0);
+        timeToRespawnEnemy = 100
+        minSizeEnemy = 20
+        maxSizeEnemy = 100
+    }
+}
+
+function proOfSpaceship3(angle) {
+    const projectileRadius = 7
+    dmgLocal = projectileRadius
+        const velocity = {
+            x: Math.cos(angle) * 7,
+            y: Math.sin(angle) * 7,
+        }
+        //sau mỗi lần 1 viên đạn được tạo thì thêm nó vào mảng prejectiles
+        SHOOT.play()
+    SHOOT.currentTime = 0;
+    setTimeout(() => {
+        SHOOT.play()
+        SHOOT.currentTime = 0;
+    }, 100);
+            // đường đạn song song
+        let wing
+    if (score < 1000) {
+        //1
+        console.log("type: 1" )
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        }, 200);
+        minSizeEnemy = 10
+        maxSizeEnemy = 35
+    } else if (score >= 1000 && score < 2000) {
+        //2
+        console.log("type: 2" )
+        wing = 35
+        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 200);
+        timeToRespawnEnemy = 800
+        minSizeEnemy = 15
+        maxSizeEnemy = 45
+    } else if (score >= 2000 && score < 3000) {
+        //3
+        console.log("type: 3" )
+
+        wing = 35
+        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 200);
+       timeToRespawnEnemy = 600
+        minSizeEnemy = 20
+        maxSizeEnemy = 55
+    } else if (score >= 3000 && score < 4000) {
+        //4
+        console.log("type: 4" )
+        wing = 35
+        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))  
+        setTimeout(() => {
+            wing = 20
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))    
+            wing = 50
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 150);
+        setTimeout(() => {
+            wing = 35
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 300);
+        setTimeout(() => {
+            wing = 35
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 450);
+        timeToRespawnEnemy =400
+        minSizeEnemy = 20
+        maxSizeEnemy = 60
+    } else if (score >= 4000 && score < 5000) {
+        //5
+        console.log("type: 5")
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        }, 0);
+        setTimeout(() => {
+            wing = 20
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 100);
+        setTimeout(() => {
+            wing = 40
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 200);
+        setTimeout(() => {
+            wing = 60
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'red', velocity))
+        }, 300);
+        setTimeout(() => {
+            wing = 40
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 400);
+        setTimeout(() => {
+            wing = 20
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 500);;
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        }, 600);
+        timeToRespawnEnemy = 300
+        minSizeEnemy = 25
+        maxSizeEnemy = 70
+    } else if (score >= 5000 && score < 6000) {
+        //6
+        console.log("type: 6")
+        setTimeout(() => {
+            wing = 60
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 600);
+        setTimeout(() => {
+            wing = 30
+            //right
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 60
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+           }, 500);
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 30
+            //right
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 60
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            }, 400);
+        setTimeout(() => {
+            wing = 30
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            //right
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity)) }, 300);
+
+        setTimeout(() => {
+            wing = 60
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 30
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        }, 200);
+        setTimeout(() => {
+            wing = 60
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 30
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+        }, 100);
+        setTimeout(() => {
+            wing = 60
+            //left
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+        }, 0);
+        timeToRespawnEnemy = 200
+        minSizeEnemy = 25
+        maxSizeEnemy = 75
+    } else if (score >= 6000) {
+        //7
+        console.log("type: 7")
+        setTimeout(() => {
+            wing = 45
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 600);
+        setTimeout(() => {
+            wing = 30
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 60
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 500);
+        setTimeout(() => {
+            wing = 15
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 75
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 400);
+        setTimeout(() => {
+            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            wing = 90
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 45
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'red', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'red', velocity))
+           }, 300);
+        setTimeout(() => {
+            wing = 15
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 75
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 200);
+        setTimeout(() => {
+            wing = 30
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            wing = 60
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 100);
+        setTimeout(() => {
+            wing = 45
+            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        }, 0);
+        timeToRespawnEnemy = 100
+        minSizeEnemy = 20
+        maxSizeEnemy = 100
+    }
+}
 
 //nút start/ restart lại game
 button.addEventListener('click', () => {
@@ -474,5 +895,37 @@ button.addEventListener('click', () => {
     animate()  // bắt đầu hiệu ứng chính  cúa game
     spawnEnemy(minSizeEnemy, maxSizeEnemy)  // tạo quân địch   
     player.animateAround()
+    isStart = true
 })
 
+spaceShip1.addEventListener('click', () => {
+    spaceshipImg.src = "./img/spaceship1.png"  //gán link ảnh tau 1
+    spaceShip1.style.border = 'solid 1px orange'
+    spaceShip2.style.border = ''
+    spaceShip3.style.border = ''
+    typeOfSpaceShip = 1
+})
+
+spaceShip2.addEventListener('click', () => {
+    spaceshipImg.src = "./img/spaceship2.png"  //gán link ảnh tau 2
+    spaceShip2.style.border = 'solid 1px orange'
+    spaceShip1.style.border = ''
+    spaceShip3.style.border = ''
+    typeOfSpaceShip = 2
+})
+
+spaceShip3.addEventListener('click', () => {
+    spaceshipImg.src = "./img/spaceship3.png"  //gán link ảnh tau 3
+    spaceShip3.style.border = 'solid 1px orange'
+    spaceShip2.style.border = ''
+    spaceShip1.style.border = ''
+    typeOfSpaceShip = 3
+})
+
+exitBtn.addEventListener('click', () => {
+    spaceShipTitle.style.display = 'block'
+    spaceShip1.style.display = 'block'
+    spaceShip2.style.display = 'block'
+    spaceShip3.style.display = 'block'
+    isStart = false
+})
