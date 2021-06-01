@@ -3,6 +3,10 @@ const ctx = canvas.getContext('2d'); //set bối cảnh dạng 2d
 
 canvas.width = window.innerWidth; //set độ rộng của game = độ rộng màng hình 
 canvas.height = window.innerHeight; //set độ cao của game = độ cao màng hình 
+ctx.setTextBasline = 'middle';
+let hue = 0;
+let particlesLU = [];  //particles of level up
+let numberOfParticlesLU = (canvas.width * canvas.height) / 7000;
 
 const scoreLabel = document.getElementById("scoreLabel").querySelector("span:last-child")    //element hiển thị điểm khi chơi
 const box = document.getElementById('box');  //element hiển thị bảng khi bắt đầu và kết thúc game
@@ -13,8 +17,9 @@ var dmgLocal = 5
 var isStart = false
 const degree = Math.PI / 180
 let spaceshipImg = document.getElementById('playerImg')
+var isUppingLevel = false
 let angleM = -90 * (Math.PI / 180)   // góc xoay của đường đạn so với trục x
-console.log(angleM)
+// console.log(angleM)
 // let img = new Image()
 spaceshipImg.src = 'img/spaceship1.png'
 let typeOfSpaceShip = 1
@@ -29,7 +34,7 @@ function drawRotated(degrees){
     ctx.save();
     ctx.translate(canvas.width/2,canvas.height/2);
     ctx.rotate(degrees);
-    ctx.drawImage(spaceshipImg,-40,-40, 80, 80);
+    ctx.drawImage(spaceshipImg, -30, -30, 60, 60);
     ctx.restore();
 }
 let minSizeEnemy = 7
@@ -48,9 +53,13 @@ const BOOM = new Audio()
 BOOM.src = './sound/boom.wav'
 
 const mouse = {
-    x: innerWidth / 2,
-    y: innerHeight / 2
-}
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    radius: 60,
+    autopilotAngle: 0, // góc xoay tự động
+};
+let posX = canvas.width / 2;
+let posY = canvas.height / 2;
 
 const colors = [
     '#00bdff',
@@ -226,7 +235,7 @@ class Particle2 {
     }
 }
 
-let particles2 = [] //mảng lưu lại những viên quanh đốip tượng đang xét
+let particles2 = [] //mảng lưu lại những viên ở background
 let timeToRespawnEnemy = 1000
 // hàm khởi tạo quân địch
 function spawnEnemy(sizeMin, sizeMax) {
@@ -252,17 +261,83 @@ function spawnEnemy(sizeMin, sizeMax) {
         }
         let abc = new Enemy(x, y, radius, color, velocity)
         enemies.push(abc)  // thêm quân địch vừa tạo bên trên vào mảng đã khai báo
-        console.log("respawn: " + timeToRespawnEnemy)
+        // console.log("respawn: " + timeToRespawnEnemy)
 
     }, timeToRespawnEnemy)
 }
+class LevelUpParticle {
+    constructor(x, y, radius) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius; // bán kính
+        this.color = 'hsl(' + hue + ', 100%, 50%)'; // màu sắc hệ hsl
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 0.8, 0, Math.PI * 1.5, true);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+    }
+    update() {
+        // nếu mà trạng thái của chuột là undefined thì xóa bớt bóng
+        if (mouse.x === undefined && mouse.y === undefined) {
+            let newX =
+                ((mouse.radius * canvas.width) / 200) *
+                Math.sin(mouse.autopilotAngle * (Math.PI / 60));
+            let newY =
+                ((mouse.radius * canvas.height) / 200) *
+                Math.sin(mouse.autopilotAngle * (Math.PI / 140));
+            mouse.X = newX + canvas.width / 2;
+            mouse.Y = newY + canvas.height / 2;
+            mouse.autopilotAngle += 0.004;
+        }
+    }
+}
 
-let animationId
-function animate() {
-    drawRotated(angleM)
-    animationId = requestAnimationFrame(animate) // phương thức này làm mới màn hình sau mỗi lần quét 
-    ctx.fillStyle = 'rgba(0,0,0,0.1)'  // đổ màu nền và làm hiệu ứng mờ nhờ hệ số alpha (0,1)
-    ctx.fillRect(0, 0, canvas.width, canvas.height)  //vẽ màn hình game
+let angleRotate = 0;
+let radiusRatate = 0;
+
+// hàm xử lý những cái viên tạo ra có hình dạng chồng chéo lên nhau
+function handleOverlap() {
+    let overlapping = false;
+    let protection = 30; // giới hạn số lần tạo ra cái mới
+    let counter = 0; // đếm xem đã tạo bao nhiêu lần
+    while (particlesLU.length < numberOfParticlesLU && counter < protection) {
+        let randomAngle = Math.random() * 2 * Math.PI;
+        let randomRadius = mouse.radius * Math.sqrt(Math.random());
+        let particle = {
+            x: mouse.x + randomRadius * Math.cos(randomAngle),
+            y: mouse.y + randomRadius * Math.sin(randomAngle),
+            radius: Math.floor(Math.random() * 15) + 5,
+        };
+        overlapping = false;
+        for (let i = 0; i < particlesLU.length; i++) {
+            let previousParticle = particlesLU[i];
+            let dx = particle.x - previousParticle.x;
+            let dy = particle.y - previousParticle.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < particle.radius + previousParticle.radius) {
+                overlapping = true;
+                break;
+            }
+        }
+        if (!overlapping) {
+            particlesLU.unshift(
+                new LevelUpParticle(particle.x, particle.y, particle.radius)
+            );
+        }
+        counter++;
+    }
+}
+
+let animationId1, animationId2
+let levelScore = 1000  //mốc điểm cần đạt
+function animate1() {
     // player.draw()  //vẽ người chơi
     //xét hiệu ứng lúc va chạm sẽ tỏa ra 
     particles.forEach((particle, index) => {
@@ -294,7 +369,7 @@ function animate() {
         //end game
         const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y) // tính khoảng cách của quân địch và người chơi
         if (dist - enemy.radius - player.radius < 1) {
-            cancelAnimationFrame(animationId)  // dừng frame
+            cancelAnimationFrame(animationId1)  // dừng frame
             box.style.display = 'flex'   // xét thuộc tính display cho box để hiện lên bảng kết thúc chơi game
             button.innerHTML = 'Restart'   // set text cho nút 
             scoreLabel.innerHTML = 0; // set lại điểm trên góc màn hình
@@ -346,7 +421,67 @@ function animate() {
                 }
             }
         })
-    })  
+    })
+    if (score >= levelScore && levelScore <= 6000) {
+        console.log('level UP')
+        isUppingLevel = true
+        // cancelAnimationFrame(animationId1)
+        levelScore += 1000
+    }
+}
+
+function animate2() {
+        //thực hiện hiệu ứng chuyển level
+        // animationId2 = requestAnimationFrame(animate2);
+        console.log("run level up")
+        projectiles = []
+        enemies = []
+        particles = []
+        if (canvas.width > canvas.height && posX < canvas.width || canvas.width < canvas.height && posY < canvas.height) {
+            for (let i = 0; i < particlesLU  .length; i++) {
+                particlesLU[i].draw();
+                particlesLU[i].update();
+            }
+            if (particlesLU.length >= numberOfParticlesLU) {
+                for (let i = 0; i < 5; i++) {
+                    //loại  bỏ 5 quả trong 1 lần
+                    particlesLU.pop();
+                }
+            }
+            handleOverlap();
+            hue += 2;
+            //rotate
+            posX += radiusRatate * Math.sin(angleRotate);
+            posY += radiusRatate * Math.cos(angleRotate);
+            mouse.x = posX;
+            mouse.y = posY;
+            angleRotate += 0.2;
+            radiusRatate += 1;
+        }
+    if (canvas.width > canvas.height && posX >= canvas.width || canvas.width < canvas.height && posY >= canvas.height){
+        console.log("done")
+        // cancelAnimationFrame(animationId2)
+        isUppingLevel = false
+        posX = canvas.width / 2
+        posY = canvas.height / 2
+        mouse.x = canvas.width / 2
+        mouse.y = canvas.height / 2
+        angleRotate = 0;
+        radiusRatate = 0;
+    }
+}
+function animate() {
+    drawRotated(angleM)
+    // animationId1 = requestAnimationFrame(animate1) // phương thức này làm mới màn hình sau mỗi lần quét 
+    ctx.fillStyle = 'rgba(0,0,0,0.1)'  // đổ màu nền và làm hiệu ứng mờ nhờ hệ số alpha (0,1)
+    ctx.fillRect(0, 0, canvas.width, canvas.height)  //vẽ màn hình game
+    if (isUppingLevel == false) {
+        animate1()
+    }
+    else if (isUppingLevel == true) {
+        animate2()
+    }
+    requestAnimationFrame(animate)
 }
 
 player.animateAround()
@@ -375,7 +510,7 @@ window.addEventListener('click', function (e) {
 })
 
 function proOfSpaceship2(angle) {
-    const projectileRadius = 15
+    const projectileRadius = 12
     dmgLocal = projectileRadius
         const velocity = {
             x: Math.cos(angle) * 5,

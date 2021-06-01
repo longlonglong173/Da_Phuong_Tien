@@ -4,25 +4,36 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 ctx.setTextBasline = 'middle';
+let letterArrays = ['A', 'B', 'C'];
 let hue = 0;
-let particlesLU = [];  //particles of level up
-let numberOfParticlesLU = (canvas.width * canvas.height) / 7000;
+let particles = [];
+let numberOfParticles = (canvas.width * canvas.height) / 7000;
+// let numberOfParticles = 50;
+console.log('number : ' + numberOfParticles);
 const mouse = {
     x: canvas.width / 2,
-    y: canvas.height / 2,
+    y:  canvas.height / 2,
     radius: 60,
     autopilotAngle: 0, // góc xoay tự động
 };
 
-let posX = canvas.width / 2;
-let posY = canvas.height / 2;
+let posX = canvas.width / 2
+let posY = canvas.height / 2
 
-class LevelUpParticle {
+// window.addEventListener('mousemove', (e) => {
+//   mouse.x = e.clientX;
+//   mouse.y = e.clientY;
+//   console.log('X: ', mouse.x, '-Y: ', mouse.y);
+// });
+
+class Particle {
     constructor(x, y, radius) {
         this.x = x;
         this.y = y;
         this.radius = radius; // bán kính
         this.color = 'hsl(' + hue + ', 100%, 50%)'; // màu sắc hệ hsl
+        this.text =
+            letterArrays[Math.floor(Math.random() * letterArrays.length)];
     }
     draw() {
         ctx.beginPath();
@@ -52,14 +63,17 @@ class LevelUpParticle {
 }
 
 let angleRotate = 0;
-let radiusRatate = 0;
+function autoRotate() {
+    mouse.x += 5 * Math.sin(angleRotate);
+    mouse.y += 5 * Math.cos(angleRotate);
+}
 
 // hàm xử lý những cái viên tạo ra có hình dạng chồng chéo lên nhau
 function handleOverlap() {
     let overlapping = false;
     let protection = 30; // giới hạn số lần tạo ra cái mới
     let counter = 0; // đếm xem đã tạo bao nhiêu lần
-    while (particlesLU.length < numberOfParticlesLU && counter < protection) {
+    while (particles.length < numberOfParticles && counter < protection) {
         let randomAngle = Math.random() * 2 * Math.PI;
         let randomRadius = mouse.radius * Math.sqrt(Math.random());
         let particle = {
@@ -68,8 +82,8 @@ function handleOverlap() {
             radius: Math.floor(Math.random() * 15) + 5,
         };
         overlapping = false;
-        for (let i = 0; i < particlesLU.length; i++) {
-            let previousParticle = particlesLU[i];
+        for (let i = 0; i < particles.length; i++) {
+            let previousParticle = particles[i];
             let dx = particle.x - previousParticle.x;
             let dy = particle.y - previousParticle.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
@@ -79,55 +93,52 @@ function handleOverlap() {
             }
         }
         if (!overlapping) {
-            particlesLU.unshift(
-                new LevelUpParticle(particle.x, particle.y, particle.radius)
+            particles.unshift(
+                new Particle(particle.x, particle.y, particle.radius)
             );
         }
         counter++;
     }
 }
+handleOverlap();
 
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (canvas.width > canvas.height && posX < canvas.width || canvas.width < canvas.height && posY < canvas.height) {
-        for (let i = 0; i < particlesLU  .length; i++) {
-            particlesLU[i].draw();
-            particlesLU[i].update();
-        }
-        if (particlesLU.length >= numberOfParticlesLU) {
-            for (let i = 0; i < 5; i++) {
-                //loại  bỏ 5 quả trong 1 lần
-                particlesLU.pop();
-            }
-        }
-        handleOverlap();
-        hue += 2;
-        //rotate
-        posX += radiusRatate * Math.sin(angleRotate);
-        posY += radiusRatate * Math.cos(angleRotate);
-        mouse.x = posX;
-        mouse.y = posY;
-        angleRotate += 0.2;
-        radiusRatate += 1;
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].draw();
+        particles[i].update();
     }
+    if (particles.length >= numberOfParticles) {
+        for (let i = 0; i < 5; i++) {
+            //loại  bỏ 5 quả trong 1 lần
+            particles.pop();
+        }
+    }
+    handleOverlap();
+    hue += 2;
+    //rotate
+    // autopilot()
+    mouse.x += 5 * Math.sin(angleRotate);
+    mouse.y += 5 * Math.cos(angleRotate);
+    angleRotate +=0.2
     requestAnimationFrame(animate);
 }
 
 animate();
 
-// let autopilot = setInterval(() => {
-//     mouse.x = undefined;
-//     mouse.y = undefined;
-// }, 40);
+let autopilot = setInterval(() => {
+    mouse.x = undefined;
+    mouse.y = undefined;
+}, 40);
 
-// canvas.addEventListener('mouseleave', () => {
-//     autopilot = setInterval(() => {
-//         mouse.x = undefined;
-//         mouse.y = undefined;
-//     }, 40);
-// });
+canvas.addEventListener('mouseleave', () => {
+    autopilot = setInterval(() => {
+        mouse.x = undefined;
+        mouse.y = undefined;
+    }, 40);
+});
 
-// canvas.addEventListener('mouseenter', () => {
-//     clearInterval(autopilot);
-//     autopilot = undefined;
-// });
+canvas.addEventListener('mouseenter', () => {
+    clearInterval(autopilot);
+    autopilot = undefined;
+});
