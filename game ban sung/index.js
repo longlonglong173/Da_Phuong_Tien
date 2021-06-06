@@ -187,7 +187,7 @@ class Particle {
 
 const xCenter = canvas.width / 2;  //tọa độ của người chơi ở giữa màn hình 
 const yCenter = canvas.height / 2; //....
-let player = new Player(xCenter, yCenter, 20, 'white');  //khởi tạo người chơi
+let player = new Player(xCenter, yCenter, 30, 'white');  //khởi tạo người chơi
 let projectiles = []   // mảng lưu các viên đạn được bắn ra
 let enemies = []        // mảng lưu các quân địch được random trên màng hình
 let particles = []  //mảng lưu các viên hiệu ứng nổ
@@ -273,7 +273,7 @@ function spawnEnemy(sizeMin, sizeMax) {
             y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius
         }
         const color = `hsl(${Math.random() * 360}, 50%, 50%)`  //random màu sắc của quân địch
-        const angle = Math.atan2(yCenter - y, xCenter - x)  // tính góc của quân địch được random so với trục x
+        const angle = Math.atan2(navigate.y - y, navigate.x - x)  // tính góc của quân địch được random so với trục x
         // phương của quân địch luôn  hướng về người chơi(giữa màn hình)
         const velocity = {
             x: Math.cos(angle),  //tính độ dài trục x của vận tốc
@@ -362,16 +362,16 @@ function animate1() {
     // player.draw()  //vẽ người chơi
     //xét hiệu ứng lúc va chạm sẽ tỏa ra 
     if (isUP) {
-        navigate.y -= 1
+        navigate.y -= 2
     }
     if (isDOWN) {
-        navigate.y += 1
+        navigate.y += 2
     }
     if (isRIGHR) {
-        navigate.x += 1
+        navigate.x += 2
     }
     if (isLEFT) {
-        navigate.x -= 1
+        navigate.x -= 2
     }
     player.update()
     particles.forEach((particle, index) => {
