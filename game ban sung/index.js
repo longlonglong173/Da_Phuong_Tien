@@ -1,5 +1,7 @@
 const canvas = document.querySelector('canvas');  //lấy element canvas bên file html
 const ctx = canvas.getContext('2d'); //set bối cảnh dạng 2d
+const currentHealthBar = document.getElementById('currentHealthBar')
+const maxHealthBar = document.getElementById('maxHealthBar')
 
 canvas.width = window.innerWidth; //set độ rộng của game = độ rộng màng hình 
 canvas.height = window.innerHeight; //set độ cao của game = độ cao màng hình 
@@ -19,6 +21,10 @@ const degree = Math.PI / 180
 let spaceshipImg = document.getElementById('playerImg')
 var isUppingLevel = false
 let angleM = -90 * (Math.PI / 180)   // góc xoay của đường đạn so với trục x
+let health = 1000
+const maxHealthWidth = maxHealthBar.offsetWidth  //lấy chiều dài lớn nhất của thanh máu
+let currenHealthWidth
+console.log("health: " + maxHealthWidth)
 // console.log(angleM)
 // let img = new Image()
 spaceshipImg.src = 'img/spaceship1.png'
@@ -180,6 +186,7 @@ function init() {
     enemies = []
     particles = []
     particles2 = []
+    currentHealthBar.style.width = maxHealthWidth
     isStart = false
 }
 
@@ -335,7 +342,7 @@ function handleOverlap() {
     }
 }
 
-let animationId1, animationId2
+let animationId
 let levelScore = 1000  //mốc điểm cần đạt
 function animate1() {
     // player.draw()  //vẽ người chơi
@@ -369,17 +376,29 @@ function animate1() {
         //end game
         const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y) // tính khoảng cách của quân địch và người chơi
         if (dist - enemy.radius - player.radius < 1) {
-            cancelAnimationFrame(animationId1)  // dừng frame
-            box.style.display = 'flex'   // xét thuộc tính display cho box để hiện lên bảng kết thúc chơi game
-            button.innerHTML = 'Restart'   // set text cho nút 
-            scoreLabel.innerHTML = 0; // set lại điểm trên góc màn hình
-            scoreBox.innerHTML = score;  //set text cho số điểm
-            score = 0;   //reset lại số điểm 
-            isStart = false
-            spaceShip1.style.display = 'none'
-            spaceShip2.style.display = 'none'
-            spaceShip3.style.display = 'none'
-            spaceShipTitle.style.display = 'none'
+            if (health <= 0 && isStart == true) {
+                cancelAnimationFrame(animationId)  // dừng frame
+                box.style.display = 'flex'   // xét thuộc tính display cho box để hiện lên bảng kết thúc chơi game
+                button.innerHTML = 'Restart'   // set text cho nút 
+                scoreLabel.innerHTML = 0; // set lại điểm trên góc màn hình
+                scoreBox.innerHTML = score;  //set text cho số điểm
+                score = 0;   //reset lại số điểm 
+                isStart = false
+                spaceShip1.style.display = 'none'
+                spaceShip2.style.display = 'none'
+                spaceShip3.style.display = 'none'
+                spaceShipTitle.style.display = 'none'
+                timeToRespawnEnemy = 1000
+                minSizeEnemy = 7
+                maxSizeEnemy = 30
+                health = 1000
+            }
+            else {
+                health -= Math.round(enemy.radius * 5)
+                currentHealthBar.style.width = maxHealthWidth * (health / 1000)
+                enemies.splice(index, 1)
+                console.log("health: " + health + "width:" + currentHealthBar.width)
+            }
         }
         enemy.update()
         projectiles.forEach((pro, index2) => {
@@ -481,7 +500,7 @@ function animate() {
     else if (isUppingLevel == true) {
         animate2()
     }
-    requestAnimationFrame(animate)
+   animationId= requestAnimationFrame(animate)
 }
 
 player.animateAround()
