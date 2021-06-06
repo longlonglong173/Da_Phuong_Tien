@@ -91,7 +91,6 @@ btn_start_game.addEventListener("click",  () => {
     isStart = true;
     start_game.style.display = "none"; // ẩn background bắt đầu game
     play_game.style.display = "block";  // hiển thị lên màn chơi game
-    background.current = background.ready;  // chuyển về màn hình chuẩn bị
     animate();
 })
 
@@ -341,7 +340,7 @@ addEventListener('click', function () {
 })
 
 // event bấm phím để chơi
-addEventListener('keydown', function () {
+document.addEventListener('keydown', function () {
     if (isStart) {
         switch (background.current) {
             case background.ready:

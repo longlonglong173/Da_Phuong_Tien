@@ -86,6 +86,8 @@ let btn_start_game = document.getElementById("btn_start-game");
 let btn_play_again = document.getElementById("btn_play-again");
 let btn_exit = document.getElementById("btn_exit");
 
+// nút bắt đầu game
+
 btn_start_game.addEventListener("click", function () {
     isStart = true;
     start_game.style.display = "none";
@@ -324,8 +326,6 @@ let background = new Background(0, 0, 900, 500);
 
 //sự kiện bấm 
 canvas.addEventListener('click', function () {
-    // listImg[0].setAttribute('filter', 'grayscale(100%)')
-    backgroundImg.setAttribute('filter', 'grayscale(100%)')
     switch (background.current) {
         case background.ready:
             background.current = background.game;
@@ -337,10 +337,9 @@ canvas.addEventListener('click', function () {
             break;
     }
 })
-canvas.addEventListener('mouseover', function () {
-    backgroundImg.setAttribute('filter', 'grayscale(100%)');
-    console.log("hover")
-})
+// canvas.addEventListener('mouseover', function () {
+//     backgroundImg.setAttribute('filter', 'grayscale(100%)');
+// })
 
 document.addEventListener('keydown', function () {
     if (isStart) {
