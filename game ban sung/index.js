@@ -38,7 +38,7 @@ const exitBtn = document.getElementById('exit-btn')
 
 function drawRotated(degrees){
     ctx.save();
-    ctx.translate(canvas.width/2,canvas.height/2);
+    ctx.translate(navigate.x, navigate.y);
     ctx.rotate(degrees);
     ctx.drawImage(spaceshipImg, -30, -30, 60, 60);
     ctx.restore();
@@ -58,12 +58,17 @@ HIT.volume = 0.2
 const BOOM = new Audio()
 BOOM.src = './sound/boom.wav'
 
-const mouse = {
+const center = {
     x: canvas.width / 2,
     y: canvas.height / 2,
     radius: 60,
     autopilotAngle: 0, // góc xoay tự động
 };
+
+const navigate = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+}
 let posX = canvas.width / 2;
 let posY = canvas.height / 2;
 
@@ -80,6 +85,10 @@ class Player {
         this.y = y
         this.radius = radius
         this.color = color
+    }
+    update() {
+        this.x = navigate.x
+        this.y = navigate.y
     }
 
     //tạo animation space với trung tâm là người chơi
@@ -113,6 +122,7 @@ class Projectile {
         this.draw()
         this.x = this.x + this.velocity.x
         this.y = this.y + this.velocity.y
+        
     }
 }
 
@@ -124,6 +134,9 @@ class Enemy {
         this.radius = radius
         this.color = color
         this.velocity = velocity
+        this.oldPosX = navigate.x
+        this.oldPosY = navigate.y
+        console.log("this player pos: " + this.oldPosX + "-" + this.oldPosY)
     }
     draw() {
         ctx.beginPath();
@@ -223,8 +236,8 @@ class Particle2 {
             }
             this.radians += this.velocity
             //hiệu ứng di chuột
-            this.lastMouse.x += (mouse.x - this.lastMouse.x) * 0.001
-            this.lastMouse.y += (mouse.y - this.lastMouse.y) * 0.001
+            this.lastMouse.x += (center.x - this.lastMouse.x) * 0.001
+            this.lastMouse.y += (center.y - this.lastMouse.y) * 0.001
             //làm cho điểm chạy theo thời gian
             this.x = this.lastMouse.x + Math.cos(this.radians) * this.distanceFromCenter;
             this.y = this.lastMouse.y + Math.sin(this.radians) * this.distanceFromCenter;
@@ -278,6 +291,7 @@ class LevelUpParticle {
         this.y = y;
         this.radius = radius; // bán kính
         this.color = 'hsl(' + hue + ', 100%, 50%)'; // màu sắc hệ hsl
+        
     }
     draw() {
         ctx.beginPath();
@@ -292,16 +306,16 @@ class LevelUpParticle {
     }
     update() {
         // nếu mà trạng thái của chuột là undefined thì xóa bớt bóng
-        if (mouse.x === undefined && mouse.y === undefined) {
+        if (center.x === undefined && center.y === undefined) {
             let newX =
-                ((mouse.radius * canvas.width) / 200) *
-                Math.sin(mouse.autopilotAngle * (Math.PI / 60));
+                ((center.radius * canvas.width) / 200) *
+                Math.sin(center.autopilotAngle * (Math.PI / 60));
             let newY =
-                ((mouse.radius * canvas.height) / 200) *
-                Math.sin(mouse.autopilotAngle * (Math.PI / 140));
-            mouse.X = newX + canvas.width / 2;
-            mouse.Y = newY + canvas.height / 2;
-            mouse.autopilotAngle += 0.004;
+                ((center.radius * canvas.height) / 200) *
+                Math.sin(center.autopilotAngle * (Math.PI / 140));
+            center.X = newX + canvas.width / 2;
+            center.Y = newY + canvas.height / 2;
+            center.autopilotAngle += 0.004;
         }
     }
 }
@@ -316,10 +330,10 @@ function handleOverlap() {
     let counter = 0; // đếm xem đã tạo bao nhiêu lần
     while (particlesLU.length < numberOfParticlesLU && counter < protection) {
         let randomAngle = Math.random() * 2 * Math.PI;
-        let randomRadius = mouse.radius * Math.sqrt(Math.random());
+        let randomRadius = center.radius * Math.sqrt(Math.random());
         let particle = {
-            x: mouse.x + randomRadius * Math.cos(randomAngle),
-            y: mouse.y + randomRadius * Math.sin(randomAngle),
+            x: center.x + randomRadius * Math.cos(randomAngle),
+            y: center.y + randomRadius * Math.sin(randomAngle),
             radius: Math.floor(Math.random() * 15) + 5,
         };
         overlapping = false;
@@ -347,6 +361,19 @@ let levelScore = 1000  //mốc điểm cần đạt
 function animate1() {
     // player.draw()  //vẽ người chơi
     //xét hiệu ứng lúc va chạm sẽ tỏa ra 
+    if (isUP) {
+        navigate.y -= 1
+    }
+    if (isDOWN) {
+        navigate.y += 1
+    }
+    if (isRIGHR) {
+        navigate.x += 1
+    }
+    if (isLEFT) {
+        navigate.x -= 1
+    }
+    player.update()
     particles.forEach((particle, index) => {
         if (particle.alpha <= 0) {
             particles.splice(index, 1);   //  nếu độ nét của viên hiệu ứng nổ  <= 0 thì sẽ bỏ viên hiệu ứng đó khỏi mảng
@@ -472,8 +499,8 @@ function animate2() {
             //rotate
             posX += radiusRatate * Math.sin(angleRotate);
             posY += radiusRatate * Math.cos(angleRotate);
-            mouse.x = posX;
-            mouse.y = posY;
+            center.x = posX;
+            center.y = posY;
             angleRotate += 0.2;
             radiusRatate += 1;
         }
@@ -483,8 +510,8 @@ function animate2() {
         isUppingLevel = false
         posX = canvas.width / 2
         posY = canvas.height / 2
-        mouse.x = canvas.width / 2
-        mouse.y = canvas.height / 2
+        center.x = canvas.width / 2
+        center.y = canvas.height / 2
         angleRotate = 0;
         radiusRatate = 0;
     }
@@ -507,14 +534,14 @@ player.animateAround()
 
 //lấy tọa độ chuột để quay tàu theo hướng chuột
 addEventListener('mousemove', (e) => {
-    const angle = Math.atan2(e.clientY - yCenter, e.clientX - xCenter)  // góc giữu đường đạn và trục x
+    const angle = Math.atan2(e.clientY - navigate.y, e.clientX - navigate.x)  // góc giữu đường đạn và trục x
     angleM = angle + Math.PI/2
 })
 //set event click trên màn hình
 window.addEventListener('click', function (e) {
     //tính góc của đường đạn so với trục x
     if (isStart == true) {
-        const angle = Math.atan2(e.clientY - yCenter, e.clientX - xCenter)  // góc giữu đường đạn và trục x
+        const angle = Math.atan2(e.clientY - navigate.y, e.clientX - navigate.x)  // góc giữu đường đạn và trục x
         if (typeOfSpaceShip == 1) {
             proOfSpaceship1(angle)
         } else  if(typeOfSpaceShip == 2){
@@ -523,7 +550,6 @@ window.addEventListener('click', function (e) {
         else if (typeOfSpaceShip == 3) {
             proOfSpaceship3(angle)
         }
-
     }
     // console.log("projectiles: " + projectiles)
 })
@@ -566,63 +592,63 @@ function proOfSpaceship2(angle) {
     
     if (score < 1000) {
         //1
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
         minSizeEnemy = 10
         maxSizeEnemy = 35
     } else if (score >= 1000 && score < 2000) {
         //2
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2r))
         timeToRespawnEnemy = 800
         minSizeEnemy = 15
         maxSizeEnemy = 45
     } else if (score >= 2000 && score < 3000) {
         //3
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2r))
         timeToRespawnEnemy = 600
         minSizeEnemy = 20
         maxSizeEnemy = 55
     } else if (score >= 3000 && score < 4000) {
         //4
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity3l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity3r))
         timeToRespawnEnemy =400
         minSizeEnemy = 20
         maxSizeEnemy = 60
     } else if (score >= 4000 && score < 5000) {
         //5
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity3l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity3r))
         timeToRespawnEnemy = 300
         minSizeEnemy = 25
         maxSizeEnemy = 70
     } else if (score >= 5000 && score < 6000) {
         //6
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity3l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity3r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity4l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity4r))
         timeToRespawnEnemy = 200
         minSizeEnemy = 25
         maxSizeEnemy = 75
     } else if (score >= 6000) {
         //7
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity2r))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity3r))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4l))
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity4r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity2r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity3l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity3r))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity4l))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity4r))
         timeToRespawnEnemy = 100
         minSizeEnemy = 20
         maxSizeEnemy = 100
@@ -648,20 +674,20 @@ function proOfSpaceship1(angle) {
     if (score < 1000) {
         //1
         console.log("type: 1" )
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
         }, 200);
         minSizeEnemy = 10
         maxSizeEnemy = 35
     } else if (score >= 1000 && score < 2000) {
         //2
         console.log("type: 2" )
-        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 200);
         timeToRespawnEnemy = 800
         minSizeEnemy = 15
@@ -671,13 +697,13 @@ function proOfSpaceship1(angle) {
         console.log("type: 3" )
 
         wing = 20
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 200);
        timeToRespawnEnemy = 600
         minSizeEnemy = 20
@@ -686,19 +712,19 @@ function proOfSpaceship1(angle) {
         //4
         console.log("type: 4" )
 
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius, 'white', velocity))
         setTimeout(() => {
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius, 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))    
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))    
         }, 150);
         setTimeout(() => {
             wing = 7
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 22
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 300);
         timeToRespawnEnemy =400
         minSizeEnemy = 20
@@ -707,27 +733,27 @@ function proOfSpaceship1(angle) {
         //5
         console.log("type: 5")
         wing = 67
-        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         setTimeout(() => {
             wing = 52
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 100);
         setTimeout(() => {
             wing = 37
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 200);
         setTimeout(() => {
             wing = 22
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 300);
         setTimeout(() => {
             wing = 7
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 400);
         timeToRespawnEnemy = 300
         minSizeEnemy = 25
@@ -737,33 +763,33 @@ function proOfSpaceship1(angle) {
         console.log("type: 6")
         setTimeout(() => {
             wing = 82
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 500);
         setTimeout(() => {
             wing = 67
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 400);
         setTimeout(() => {
             wing = 52
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 300);
         setTimeout(() => {
             wing = 37
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 200);
         setTimeout(() => {
             wing = 22
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 100);
         setTimeout(() => {
             wing =7
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 0);
         timeToRespawnEnemy = 200
         minSizeEnemy = 25
@@ -773,39 +799,39 @@ function proOfSpaceship1(angle) {
         console.log("type: 7")
         setTimeout(() => {
             wing = 82
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 500);
         setTimeout(() => {
             wing = 67
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 7
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 400);
         setTimeout(() => {
             wing = 52
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 22
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 300);
         setTimeout(() => {
             wing = 37
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 200);
         setTimeout(() => {
             wing = 22
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 100);
         setTimeout(() => {
             wing =7
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 0);
         timeToRespawnEnemy = 100
         minSizeEnemy = 20
@@ -832,9 +858,9 @@ function proOfSpaceship3(angle) {
     if (score < 1000) {
         //1
         console.log("type: 1" )
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
         }, 200);
         minSizeEnemy = 10
         maxSizeEnemy = 35
@@ -842,11 +868,11 @@ function proOfSpaceship3(angle) {
         //2
         console.log("type: 2" )
         wing = 35
-        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 200);
         timeToRespawnEnemy = 800
         minSizeEnemy = 15
@@ -856,13 +882,13 @@ function proOfSpaceship3(angle) {
         console.log("type: 3" )
 
         wing = 35
-        projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
+        projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 200);
        timeToRespawnEnemy = 600
         minSizeEnemy = 20
@@ -871,25 +897,25 @@ function proOfSpaceship3(angle) {
         //4
         console.log("type: 4" )
         wing = 35
-        projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-        projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))  
+        projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+        projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))  
         setTimeout(() => {
             wing = 20
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))    
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))    
             wing = 50
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 150);
         setTimeout(() => {
             wing = 35
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 300);
         setTimeout(() => {
             wing = 35
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 450);
         timeToRespawnEnemy =400
         minSizeEnemy = 20
@@ -898,36 +924,36 @@ function proOfSpaceship3(angle) {
         //5
         console.log("type: 5")
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
         }, 0);
         setTimeout(() => {
             wing = 20
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 100);
         setTimeout(() => {
             wing = 40
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 200);
         setTimeout(() => {
             wing = 60
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'red', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'red', velocity))
         }, 300);
         setTimeout(() => {
             wing = 40
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 400);
         setTimeout(() => {
             wing = 20
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 500);;
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
         }, 600);
         timeToRespawnEnemy = 300
         minSizeEnemy = 25
@@ -937,47 +963,47 @@ function proOfSpaceship3(angle) {
         console.log("type: 6")
         setTimeout(() => {
             wing = 60
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 600);
         setTimeout(() => {
             wing = 30
             //right
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 60
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
            }, 500);
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
             wing = 30
             //right
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 60
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             }, 400);
         setTimeout(() => {
             wing = 30
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
             //right
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity)) }, 300);
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity)) }, 300);
 
         setTimeout(() => {
             wing = 60
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
             wing = 30
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
         }, 200);
         setTimeout(() => {
             wing = 60
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
             wing = 30
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
         }, 100);
         setTimeout(() => {
             wing = 60
             //left
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
         }, 0);
         timeToRespawnEnemy = 200
         minSizeEnemy = 25
@@ -987,54 +1013,54 @@ function proOfSpaceship3(angle) {
         console.log("type: 7")
         setTimeout(() => {
             wing = 45
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 600);
         setTimeout(() => {
             wing = 30
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 60
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 500);
         setTimeout(() => {
             wing = 15
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 75
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 400);
         setTimeout(() => {
-            projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, projectileRadius , 'white', velocity))
+            projectiles.push(new Projectile(navigate.x, navigate.y, projectileRadius , 'white', velocity))
             wing = 90
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 45
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'red', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'red', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'red', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'red', velocity))
            }, 300);
         setTimeout(() => {
             wing = 15
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 75
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 200);
         setTimeout(() => {
             wing = 30
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
             wing = 60
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 100);
         setTimeout(() => {
             wing = 45
-            projectiles.push(new Projectile(canvas.width / 2 + wing * Math.sin(angle), canvas.height / 2 - wing * Math.cos(angle), 5, 'white', velocity))
-            projectiles.push(new Projectile(canvas.width / 2 - wing * Math.sin(angle), canvas.height / 2 + wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x + wing * Math.sin(angle), navigate.y - wing * Math.cos(angle), 5, 'white', velocity))
+            projectiles.push(new Projectile(navigate.x - wing * Math.sin(angle), navigate.y + wing * Math.cos(angle), 5, 'white', velocity))
         }, 0);
         timeToRespawnEnemy = 100
         minSizeEnemy = 20
@@ -1082,4 +1108,65 @@ exitBtn.addEventListener('click', () => {
     spaceShip2.style.display = 'block'
     spaceShip3.style.display = 'block'
     isStart = false
+})
+
+let isUP = false
+let isDOWN = false
+let isRIGHR = false
+let isLEFT = false
+
+document.addEventListener('keydown', (e) => {
+    // console.log(e.code)
+    setTimeout(() => {
+        e.timeStamp = 0
+        switch (e.keyCode) {
+            case 87: {
+                isUP = true
+                break
+            }
+            case 83: {
+                isDOWN = true
+                break
+            }
+            case 68: {
+                isRIGHR = true
+                break
+            }
+            case 65: {
+                isLEFT = true
+                break
+            }
+            default: {
+            }
+        }
+        
+    }, 0);
+    console.log("pos:" + navigate.x + "-" + navigate.y)
+    console.log(e)
+})
+document.addEventListener('keyup', (e) => {
+    setTimeout(() => {
+        e.timeStamp = 0
+        switch (e.keyCode) {
+            case 87: {
+                isUP = false
+                break
+            }
+            case 83: {
+                isDOWN = false
+                break
+            }
+            case 68: {
+                isRIGHR = false
+                break
+            }
+            case 65: {
+                isLEFT = false
+                break
+            }
+            default: {
+            }
+        }
+        
+    }, 0);
 })

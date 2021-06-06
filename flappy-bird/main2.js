@@ -337,9 +337,7 @@ canvas.addEventListener('click', function () {
             break;
     }
 })
-// canvas.addEventListener('mouseover', function () {
-//     backgroundImg.setAttribute('filter', 'grayscale(100%)');
-// })
+//      
 
 document.addEventListener('keydown', function () {
     if (isStart) {
