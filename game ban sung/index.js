@@ -2,22 +2,22 @@ const canvas = document.querySelector('canvas'); //lấy element canvas bên fil
 const ctx = canvas.getContext('2d'); //set bối cảnh dạng 2d
 const currentHealthBar = document.getElementById('currentHealthBar');
 const maxHealthBar = document.getElementById('maxHealthBar');
-const navBox = document.getElementById('nav');
-const textBox = document.getElementById('textBox');
+const navBox = document.getElementById('nav');  //box hiển thị điểm khi chết hoặc khi bắt đầu   
+const textBox = document.getElementById('textBox');  // chữ "point" trong khung
 canvas.width = window.innerWidth; //set độ rộng của game = độ rộng màng hình
 canvas.height = window.innerHeight; //set độ cao của game = độ cao màng hình
-ctx.setTextBasline = 'middle';
-let hue = 0;
+ctx.setTextBaseline = 'middle'; 
+let hue = 0;  //hue trong hệ màu HSL
 let particlesLU = []; //particles of level up
 let numberOfParticlesLU = (canvas.width * canvas.height) / 7000; //số lượng quả bóng khi level up bị giới hạn
-const scoreLabelX = document.getElementById('scoreLabel');
+const scoreLabelX = document.getElementById('scoreLabel');    // label điểm ở góc màn hình
 const scoreLabel = document
     .getElementById('scoreLabel')
     .querySelector('span:last-child'); //element hiển thị điểm khi chơi
 const box = document.getElementById('box'); //element hiển thị bảng khi bắt đầu và kết thúc game
 const scoreBox = document.getElementById('score'); //element hiển thị điểm trên bảng
 const button = document.getElementById('btn'); //nút bắt đầu hoặc kết thúc game
-const buttonRestart = document.getElementById('btn-restart');
+const buttonRestart = document.getElementById('btn-restart');  //nút restart
 var score = 0; //biến tính điểm
 var dmgLocal = 5;
 var isStart = false;
@@ -65,12 +65,12 @@ let minSizeEnemyLV4 = 15;
 let minSizeEnemyLV5 = 17;
 let minSizeEnemyLV6 = 20;
 
-let maxSizeEnemyLV1 = 35;
-let maxSizeEnemyLV2 = 40;
-let maxSizeEnemyLV3 = 45;
-let maxSizeEnemyLV4 = 50;
-let maxSizeEnemyLV5= 55;
-let maxSizeEnemyLV6 = 60;
+let maxSizeEnemyLV1 = 34;
+let maxSizeEnemyLV2 = 38;
+let maxSizeEnemyLV3 = 42;
+let maxSizeEnemyLV4 = 46;
+let maxSizeEnemyLV5 = 50;
+let maxSizeEnemyLV6 = 54;
 
 ctx.font = 'bold 17px Verdana'; //định dạng font chữ
 ctx.fillText('WELCOME', 0, 40); // viết nội dung
@@ -757,14 +757,17 @@ function animate1() {
                 box.style.opacity = 0;
                 box.style.backgroundSize =
                     canvas.width + 'px ' + canvas.height + 'px';
-                box.style.backgroundImage = "url('./img/gameOver.jpg')";
+                box.style.backgroundImage = "url('./img/gameOver.png')";
                 GAMEOVER.play();
             } else {
                 // va chạm vơi người chơi
                 PLAYERHIT.play();
                 PLAYERHIT.currentTime = 0;
                 health -= Math.round(enemy.radius * 5);
-                currentHealthBar.style.width = maxHealthWidth * (health / 1000);
+                if (health < 0) {
+                    health = 0
+                }
+                currentHealthBar.style.width = maxHealthWidth * ((health + 2) / 1000);
                 enemies.splice(index, 1);
             }
         }
