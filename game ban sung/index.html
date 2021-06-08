@@ -12,15 +12,18 @@
         background-color: #000;
         overflow: hidden;
     }
+
     canvas {
-            position: absolute;
-            top: -100%;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: black;
-            z-index: -1
-        }
+        position: absolute;
+        top: -100%;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: black;
+        z-index: -1
+    }
+
+
 
     #scoreLabel {
         position: fixed;
@@ -57,16 +60,17 @@
         border-radius: 10px;
     }
 
-    #btn, #btn-restart  {
+    #btn,
+    #btn-restart {
         width: 600px;
-        height: 75  px;
+        height: 75 px;
         background-color: #49e;
         border-radius: 36.5px;
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 30px;
+        font-size: 25px;
     }
 
     #btn-restart {
@@ -84,7 +88,7 @@
     #textBox {
         color: #333;
         margin: 20px;
-        font-size:20px
+        font-size: 20px
     }
 
     #playerImg {
@@ -92,7 +96,8 @@
         width: 40px;
         height: 40px;
     }
-    .spaceShipImg{
+
+    .spaceShipImg {
         width: 80px;
         height: 80px;
         margin: 10px 40px;
@@ -100,7 +105,8 @@
         border-radius: 10px;
         display: block;
     }
-    #exit-btn{
+
+    #exit-btn {
         width: 30px;
         height: 30px;
         position: fixed;
@@ -114,7 +120,8 @@
         align-items: center;
         font-size: 20px
     }
-    #maxHealthBar{
+
+    #maxHealthBar {
         position: fixed;
         top: -30px;
         left: 20%;
@@ -125,38 +132,39 @@
         border-radius: 5px;
         overflow: hidden;
     }
-    #currentHealthBar{
-        width:  100%;
+
+    #currentHealthBar {
+        width: 100%;
         height: 100%;
         background-color: red;
         border-radius: 5px;
         box-shadow: 0 0 10px 10px #888888;
     }
+
 </style>
 <div id="maxHealthBar">
     <div id="currentHealthBar">
-
     </div>
 </div>
+<audio src="./sound/backgroundSound.wav" id="bgSound" type="audio/wav"></audio>
 <div id="scoreLabel"><span>Score: </span> <span>0</span></div>
 <div id="exit-btn">X</div>
-
 <div id="box">
     <div id="nav">
         <div style="display: flex">
-            <img src="./img/spaceship1.png" alt="" class="spaceShipImg" id="spaceShip1" style="border: solid 1px orange">
+            <img src="./img/spaceship1.png" alt="" class="spaceShipImg" id="spaceShip1"
+                style="border: solid 1px orange">
             <img src="./img/spaceship2.png" alt="" class="spaceShipImg" id="spaceShip2">
             <img src="./img/spaceship3.png" alt="" class="spaceShipImg" id="spaceShip3">
         </div>
-        <h1 id="score" >0</h1>
-        <p id ="textBox">Points</p>
+        <h1 id="score">0</h1>
+        <p id="textBox">Points</p>
         <div id="btn">Start Game</div>
         <div id="btn-restart">Restart</div>
     </div>
 </div>
 <img alt="" id="playerImg">
-<canvas>
-</canvas>
+<canvas></canvas>
 <img alt="" id="playerImg">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.5.1/gsap.min.js"
     integrity="sha512-IQLehpLoVS4fNzl7IfH8Iowfm5+RiMGtHykgZJl9AWMgqx0AmJ6cRWcB+GaGVtIsnC4voMfm8f2vwtY+6oPjpQ=="
@@ -164,14 +172,13 @@
 <script src="index.js"></script>
 <svg>
     <defs>
-        <filter id ='goo'>
-            <feGaussianBlur in = 'SourceGraphic' stdDeviation='10' result= 'blur' />
-            <feColorMatrix in ='blur' mode= 'matrix' values = '1 0 0 0 0
+        <filter id='goo'>
+            <feGaussianBlur in='SourceGraphic' stdDeviation='10' result='blur' />
+            <feColorMatrix in='blur' mode='matrix' values='1 0 0 0 0
                                                               0 1 0 0 0
                                                               0 0 1 0 0 
-                                                              0 0 0 22 -9'
-                                                               />
-            <feBlend in='SourceGraphic' in2 = 'goo'  />
+                                                              0 0 0 22 -9' />
+            <feBlend in='SourceGraphic' in2='goo' />
         </filter>
     </defs>
 </svg>

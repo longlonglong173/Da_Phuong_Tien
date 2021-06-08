@@ -29,6 +29,8 @@ let angleM = -90 * (Math.PI / 180); // góc xoay của đường đạn so với
 let health = 1000;
 const maxHealthWidth = maxHealthBar.offsetWidth; //lấy chiều dài lớn nhất của thanh máu
 console.log('health: ' + maxHealthWidth);
+let timeToRespawnEnemy = 500;
+let intervalEnemy;
 
 spaceshipImg.src = 'img/spaceship1.png';
 let typeOfSpaceShip = 1;
@@ -46,7 +48,29 @@ let boxPosY = 100; // %vị trí xuất hiện của bảng chọn bắt đầu
 let healthBarPosY = -30; // vị trí xuất hiện của thanh máu, điểm, nút thoát
 let canvasPosY = -100;
 let particlesIntroShapeArray;
-let gameOverOpacity = 0
+let gameOverOpacity = 0;
+let isPlayIntroSound = false;
+const bgSound = document.getElementById('bgSound');
+let timeToRespawnLV1 = 450;
+let timeToRespawnLV2 = 400;
+let timeToRespawnLV3 = 350;
+let timeToRespawnLV4 = 300;
+let timeToRespawnLV5 = 200;
+let timeToRespawnLV6 = 100;
+
+let minSizeEnemyLV1 = 9;
+let minSizeEnemyLV2 = 11;
+let minSizeEnemyLV3 = 13;
+let minSizeEnemyLV4 = 15;
+let minSizeEnemyLV5 = 17;
+let minSizeEnemyLV6 = 20;
+
+let maxSizeEnemyLV1 = 35;
+let maxSizeEnemyLV2 = 40;
+let maxSizeEnemyLV3 = 45;
+let maxSizeEnemyLV4 = 50;
+let maxSizeEnemyLV5= 55;
+let maxSizeEnemyLV6 = 60;
 
 ctx.font = 'bold 17px Verdana'; //định dạng font chữ
 ctx.fillText('WELCOME', 0, 40); // viết nội dung
@@ -73,12 +97,34 @@ HIT.volume = 0.2;
 
 const BOOM = new Audio();
 BOOM.src = './sound/boom.wav';
+BOOM.volume = 0.6;
 
-const LEVELUP = new Audio()
-LEVELUP.src = './sound/levelup.wav'
+const LEVELUP = new Audio();
+LEVELUP.src = './sound/levelup.wav';
+LEVELUP.volume = 0.5;
 
-const BACKGROUNDSOUND = new Audio()
-BACKGROUNDSOUND.src = './sound/backgroundSound.wav'
+const BACKGROUNDSOUND = new Audio();
+BACKGROUNDSOUND.src = './sound/backgroundSound.wav';
+BACKGROUNDSOUND.volume = 0.5;
+bgSound.volume = 0.5;
+
+const INTRO = new Audio();
+INTRO.src = './sound/intro.wav';
+INTRO.volume = 0.7;
+
+const GAMEOVER = new Audio();
+GAMEOVER.src = './sound/gameOver.wav';
+GAMEOVER.volume = 0.7;
+
+const PLAYERHIT = new Audio();
+PLAYERHIT.src = './sound/playerHit.wav';
+
+const HOVERBTN = new Audio();
+HOVERBTN.src = './sound/hoverBtn.wav';
+HOVERBTN.volume = 0.5;
+
+const INTROCLICK = new Audio();
+INTROCLICK.src = './sound/introClick.wav';
 
 let mouse = {
     x: null,
@@ -413,11 +459,10 @@ function randomColor(colors) {
 }
 
 let particles2 = []; //mảng lưu lại những viên ở background
-let timeToRespawnEnemy = 500;
 // hàm khởi tạo quân địch
 function spawnEnemy(sizeMin, sizeMax) {
     //setinerval là để gọi hàm sau một khoảng thời gian nhất định
-    setInterval(() => {
+    intervalEnemy = setInterval(() => {
         const radius = Math.random() * (sizeMax - sizeMin) + sizeMin; // random kính thước của quân địch
         let x; // tọa độ của quân đch trên màn hình
         let y;
@@ -608,18 +653,18 @@ function connectShape() {
 let animationId, animationId1;
 let levelScore = 1000; //mốc điểm cần đạt
 function animate1() {
-    BACKGROUNDSOUND.play()
-
     // hiệu ứng lúc chết
     if (isDead) {
-        enemies = []
-        projectiles = []
-        navigate.x = canvas.width / 2
-        navigate.y = canvas.height / 2
+        bgSound.pause();
+        bgSound.currentTime = 0;
+        enemies = [];
+        projectiles = [];
+        navigate.x = canvas.width / 2;
+        navigate.y = canvas.height / 2;
         if (gameOverOpacity <= 1) {
-            gameOverOpacity += 0.005
-            box.style.opacity = gameOverOpacity
-        } 
+            gameOverOpacity += 0.005;
+            box.style.opacity = gameOverOpacity;
+        }
         cancelAnimationFrame(animationId); // dừng frame
     }
     //hiển thị thanh máu
@@ -708,12 +753,16 @@ function animate1() {
                 navBox.style.color = 'black';
                 navBox.style.border = '#333 solid 2px';
                 box.style.top = '0';
-                isDead = true
-                box.style.opacity = 0
-                box.style.backgroundSize = canvas.width + 'px ' + canvas.height + 'px'
-                box.style.backgroundImage = "url('./img/gameOver.jpg')"
+                isDead = true;
+                box.style.opacity = 0;
+                box.style.backgroundSize =
+                    canvas.width + 'px ' + canvas.height + 'px';
+                box.style.backgroundImage = "url('./img/gameOver.jpg')";
+                GAMEOVER.play();
             } else {
                 // va chạm vơi người chơi
+                PLAYERHIT.play();
+                PLAYERHIT.currentTime = 0;
                 health -= Math.round(enemy.radius * 5);
                 currentHealthBar.style.width = maxHealthWidth * (health / 1000);
                 enemies.splice(index, 1);
@@ -778,7 +827,7 @@ function animate2() {
     //thực hiện hiệu ứng chuyển level
     // animationId2 = requestAnimationFrame(animate2);
     console.log('run level up');
-    LEVELUP.play()
+    LEVELUP.play();
     projectiles = [];
     enemies = [];
     particles = [];
@@ -822,18 +871,27 @@ function animate2() {
 }
 function animate() {
     drawRotated(angleM);
+    bgSound.play();
     // animationId1 = requestAnimationFrame(animate1) // phương thức này làm mới màn hình sau mỗi lần quét
     ctx.fillStyle = 'rgba(0,0,0,0.1)'; // đổ màu nền và làm hiệu ứng mờ nhờ hệ số alpha (0,1)
     ctx.fillRect(0, 0, canvas.width, canvas.height); //vẽ màn hình game
     if (isUppingLevel == false) {
+        bgSound.play();
         animate1();
     } else if (isUppingLevel == true) {
+        bgSound.pause();
         animate2();
+        clearInterval(intervalEnemy);
+        spawnEnemy(minSizeEnemy, maxSizeEnemy);
     }
     animationId = requestAnimationFrame(animate);
 }
 
 function animateIntro() {
+    if (!isPlayIntroSound) {
+        INTRO.play();
+        isPlayIntroSound = true;
+    }
     ctx.clearRect(0, 0, innerWidth, innerHeight);
     connect();
     for (let i = 0; i < particleIntroArray.length; i++) {
@@ -847,9 +905,9 @@ function animateIntro() {
         boxPosY--;
     }
     if (canvasPosY < 0) {
-        canvasPosY ++
+        canvasPosY += 0.5;
         let tmp = canvasPosY + '%';
-        canvas.style.top = tmp
+        canvas.style.top = tmp;
     }
     for (let i = 0; i < particlesIntroShapeArray.length; i++) {
         particlesIntroShapeArray[i].update();
@@ -857,331 +915,6 @@ function animateIntro() {
     connectShape();
 
     animateIntroID = requestAnimationFrame(animateIntro);
-}
-
-function proOfSpaceship2(angle) {
-    const projectileRadius = 12;
-    dmgLocal = projectileRadius;
-    const velocity = {
-        x: Math.cos(angle) * 5,
-        y: Math.sin(angle) * 5,
-    };
-    //sau mỗi lần 1 viên đạn được tạo thì thêm nó vào mảng prejectiles
-    let angleStep = 4 * (Math.PI / 180);
-    SHOOT.play();
-    SHOOT.currentTime = 0;
-    const velocity2l = {
-        x: Math.cos(angle - angleStep) * 5,
-        y: Math.sin(angle - angleStep) * 5,
-    };
-    const velocity2r = {
-        x: Math.cos(angle + angleStep) * 5,
-        y: Math.sin(angle + angleStep) * 5,
-    };
-    const velocity3l = {
-        x: Math.cos(angle - 2 * angleStep) * 5,
-        y: Math.sin(angle - 2 * angleStep) * 5,
-    };
-    const velocity3r = {
-        x: Math.cos(angle + 2 * angleStep) * 5,
-        y: Math.sin(angle + 2 * angleStep) * 5,
-    };
-    const velocity4l = {
-        x: Math.cos(angle - 3 * angleStep) * 5,
-        y: Math.sin(angle - 3 * angleStep) * 5,
-    };
-    const velocity4r = {
-        x: Math.cos(angle + 3 * angleStep) * 5,
-        y: Math.sin(angle + 3 * angleStep) * 5,
-    };
-
-    if (score < 1000) {
-        //1
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity
-            )
-        );
-        minSizeEnemy = 10;
-        maxSizeEnemy = 35;
-    } else if (score >= 1000 && score < 2000) {
-        //2
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2r
-            )
-        );
-        timeToRespawnEnemy = 800;
-        minSizeEnemy = 15;
-        maxSizeEnemy = 45;
-    } else if (score >= 2000 && score < 3000) {
-        //3
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2r
-            )
-        );
-        timeToRespawnEnemy = 600;
-        minSizeEnemy = 20;
-        maxSizeEnemy = 55;
-    } else if (score >= 3000 && score < 4000) {
-        //4
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2r
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity3l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity3r
-            )
-        );
-        timeToRespawnEnemy = 400;
-        minSizeEnemy = 20;
-        maxSizeEnemy = 60;
-    } else if (score >= 4000 && score < 5000) {
-        //5
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2r
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity3l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity3r
-            )
-        );
-        timeToRespawnEnemy = 300;
-        minSizeEnemy = 25;
-        maxSizeEnemy = 70;
-    } else if (score >= 5000 && score < 6000) {
-        //6
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2r
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity3l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity3r
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity4l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity4r
-            )
-        );
-        timeToRespawnEnemy = 200;
-        minSizeEnemy = 25;
-        maxSizeEnemy = 75;
-    } else if (score >= 6000) {
-        //7
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity2r
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity3l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity3r
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity4l
-            )
-        );
-        projectiles.push(
-            new Projectile(
-                navigate.x,
-                navigate.y,
-                projectileRadius,
-                'white',
-                velocity4r
-            )
-        );
-        timeToRespawnEnemy = 100;
-        minSizeEnemy = 20;
-        maxSizeEnemy = 100;
-    }
 }
 
 function proOfSpaceship1(angle) {
@@ -1223,8 +956,8 @@ function proOfSpaceship1(angle) {
                 )
             );
         }, 200);
-        minSizeEnemy = 10;
-        maxSizeEnemy = 35;
+        minSizeEnemy = 7;
+        maxSizeEnemy = 30;
     } else if (score >= 1000 && score < 2000) {
         //2
         console.log('type: 2');
@@ -1266,9 +999,9 @@ function proOfSpaceship1(angle) {
                 )
             );
         }, 200);
-        timeToRespawnEnemy = 800;
-        minSizeEnemy = 15;
-        maxSizeEnemy = 45;
+        timeToRespawnEnemy = timeToRespawnLV1;
+        minSizeEnemy = minSizeEnemyLV1;
+        maxSizeEnemy = maxSizeEnemyLV1;
     } else if (score >= 2000 && score < 3000) {
         //3
         console.log('type: 3');
@@ -1330,9 +1063,9 @@ function proOfSpaceship1(angle) {
                 )
             );
         }, 200);
-        timeToRespawnEnemy = 600;
-        minSizeEnemy = 20;
-        maxSizeEnemy = 55;
+        timeToRespawnEnemy = timeToRespawnLV2;
+        minSizeEnemy = minSizeEnemyLV2;
+        maxSizeEnemy = maxSizeEnemyLV2;
     } else if (score >= 3000 && score < 4000) {
         //4
         console.log('type: 4');
@@ -1415,9 +1148,9 @@ function proOfSpaceship1(angle) {
                 )
             );
         }, 300);
-        timeToRespawnEnemy = 400;
-        minSizeEnemy = 20;
-        maxSizeEnemy = 60;
+        timeToRespawnEnemy = timeToRespawnLV3;
+        minSizeEnemy = minSizeEnemyLV3;
+        maxSizeEnemy = maxSizeEnemyLV3;
     } else if (score >= 4000 && score < 5000) {
         //5
         console.log('type: 5');
@@ -1524,9 +1257,9 @@ function proOfSpaceship1(angle) {
                 )
             );
         }, 400);
-        timeToRespawnEnemy = 300;
-        minSizeEnemy = 25;
-        maxSizeEnemy = 70;
+        timeToRespawnEnemy = timeToRespawnLV4;
+        minSizeEnemy = minSizeEnemyLV4;
+        maxSizeEnemy = maxSizeEnemyLV4;
     } else if (score >= 5000 && score < 6000) {
         //6
         console.log('type: 6');
@@ -1656,9 +1389,9 @@ function proOfSpaceship1(angle) {
                 )
             );
         }, 0);
-        timeToRespawnEnemy = 200;
-        minSizeEnemy = 25;
-        maxSizeEnemy = 75;
+        timeToRespawnEnemy = timeToRespawnLV5;
+        minSizeEnemy = minSizeEnemyLV5;
+        maxSizeEnemy = maxSizeEnemyLV5;
     } else if (score >= 6000) {
         //7
         console.log('type: 7');
@@ -1826,9 +1559,334 @@ function proOfSpaceship1(angle) {
                 )
             );
         }, 0);
-        timeToRespawnEnemy = 100;
-        minSizeEnemy = 20;
-        maxSizeEnemy = 100;
+        timeToRespawnEnemy = timeToRespawnLV6;
+        minSizeEnemy = minSizeEnemyLV6;
+        maxSizeEnemy = maxSizeEnemyLV6;
+    }
+}
+
+function proOfSpaceship2(angle) {
+    const projectileRadius = 12;
+    dmgLocal = projectileRadius;
+    const velocity = {
+        x: Math.cos(angle) * 5,
+        y: Math.sin(angle) * 5,
+    };
+    //sau mỗi lần 1 viên đạn được tạo thì thêm nó vào mảng prejectiles
+    let angleStep = 4 * (Math.PI / 180);
+    SHOOT.play();
+    SHOOT.currentTime = 0;
+    const velocity2l = {
+        x: Math.cos(angle - angleStep) * 5,
+        y: Math.sin(angle - angleStep) * 5,
+    };
+    const velocity2r = {
+        x: Math.cos(angle + angleStep) * 5,
+        y: Math.sin(angle + angleStep) * 5,
+    };
+    const velocity3l = {
+        x: Math.cos(angle - 2 * angleStep) * 5,
+        y: Math.sin(angle - 2 * angleStep) * 5,
+    };
+    const velocity3r = {
+        x: Math.cos(angle + 2 * angleStep) * 5,
+        y: Math.sin(angle + 2 * angleStep) * 5,
+    };
+    const velocity4l = {
+        x: Math.cos(angle - 3 * angleStep) * 5,
+        y: Math.sin(angle - 3 * angleStep) * 5,
+    };
+    const velocity4r = {
+        x: Math.cos(angle + 3 * angleStep) * 5,
+        y: Math.sin(angle + 3 * angleStep) * 5,
+    };
+
+    if (score < 1000) {
+        //1
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity
+            )
+        );
+        minSizeEnemy = 7;
+        maxSizeEnemy = 30;
+    } else if (score >= 1000 && score < 2000) {
+        //2
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2r
+            )
+        );
+        timeToRespawnEnemy = timeToRespawnLV1;
+        minSizeEnemy = minSizeEnemyLV1;
+        maxSizeEnemy = maxSizeEnemyLV1;
+    } else if (score >= 2000 && score < 3000) {
+        //3
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2r
+            )
+        );
+        timeToRespawnEnemy = timeToRespawnLV2;
+        minSizeEnemy = minSizeEnemyLV2;
+        maxSizeEnemy = maxSizeEnemyLV2;
+    } else if (score >= 3000 && score < 4000) {
+        //4
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2r
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity3l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity3r
+            )
+        );
+        timeToRespawnEnemy = timeToRespawnLV3;
+        minSizeEnemy = minSizeEnemyLV3;
+        maxSizeEnemy = maxSizeEnemyLV3;
+    } else if (score >= 4000 && score < 5000) {
+        //5
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2r
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity3l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity3r
+            )
+        );
+        timeToRespawnEnemy = timeToRespawnLV4;
+        minSizeEnemy = minSizeEnemyLV4;
+        maxSizeEnemy = maxSizeEnemyLV4;
+    } else if (score >= 5000 && score < 6000) {
+        //6
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2r
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity3l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity3r
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity4l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity4r
+            )
+        );
+        timeToRespawnEnemy = timeToRespawnLV5;
+        minSizeEnemy = minSizeEnemyLV5;
+        maxSizeEnemy = maxSizeEnemyLV5;
+    } else if (score >= 6000) {
+        //7
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity2r
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity3l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity3r
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity4l
+            )
+        );
+        projectiles.push(
+            new Projectile(
+                navigate.x,
+                navigate.y,
+                projectileRadius,
+                'white',
+                velocity4r
+            )
+        );
+        timeToRespawnEnemy = timeToRespawnLV6;
+        minSizeEnemy = minSizeEnemyLV6;
+        maxSizeEnemy = maxSizeEnemyLV6;
     }
 }
 
@@ -1871,8 +1929,8 @@ function proOfSpaceship3(angle) {
                 )
             );
         }, 200);
-        minSizeEnemy = 10;
-        maxSizeEnemy = 35;
+        minSizeEnemy = 7;
+        maxSizeEnemy = 30;
     } else if (score >= 1000 && score < 2000) {
         //2
         console.log('type: 2');
@@ -1915,9 +1973,9 @@ function proOfSpaceship3(angle) {
                 )
             );
         }, 200);
-        timeToRespawnEnemy = 800;
-        minSizeEnemy = 15;
-        maxSizeEnemy = 45;
+        timeToRespawnEnemy = timeToRespawnLV1;
+        minSizeEnemy = minSizeEnemyLV1;
+        maxSizeEnemy = maxSizeEnemyLV1;
     } else if (score >= 2000 && score < 3000) {
         //3
         console.log('type: 3');
@@ -1979,9 +2037,9 @@ function proOfSpaceship3(angle) {
                 )
             );
         }, 200);
-        timeToRespawnEnemy = 600;
-        minSizeEnemy = 20;
-        maxSizeEnemy = 55;
+        timeToRespawnEnemy = timeToRespawnLV2;
+        minSizeEnemy = minSizeEnemyLV2;
+        maxSizeEnemy = maxSizeEnemyLV2;
     } else if (score >= 3000 && score < 4000) {
         //4
         console.log('type: 4');
@@ -2086,9 +2144,9 @@ function proOfSpaceship3(angle) {
                 )
             );
         }, 450);
-        timeToRespawnEnemy = 400;
-        minSizeEnemy = 20;
-        maxSizeEnemy = 60;
+        timeToRespawnEnemy = timeToRespawnLV3;
+        minSizeEnemy = minSizeEnemyLV3;
+        maxSizeEnemy = maxSizeEnemyLV3;
     } else if (score >= 4000 && score < 5000) {
         //5
         console.log('type: 5');
@@ -2228,9 +2286,9 @@ function proOfSpaceship3(angle) {
                 )
             );
         }, 600);
-        timeToRespawnEnemy = 300;
-        minSizeEnemy = 25;
-        maxSizeEnemy = 70;
+        timeToRespawnEnemy = timeToRespawnLV4;
+        minSizeEnemy = minSizeEnemyLV4;
+        maxSizeEnemy = maxSizeEnemyLV4;
     } else if (score >= 5000 && score < 6000) {
         //6
         console.log('type: 6');
@@ -2399,9 +2457,9 @@ function proOfSpaceship3(angle) {
                 )
             );
         }, 0);
-        timeToRespawnEnemy = 200;
-        minSizeEnemy = 25;
-        maxSizeEnemy = 75;
+        timeToRespawnEnemy = timeToRespawnLV5;
+        minSizeEnemy = minSizeEnemyLV5;
+        maxSizeEnemy = maxSizeEnemyLV5;
     } else if (score >= 6000) {
         //7
         console.log('type: 7');
@@ -2656,9 +2714,9 @@ function proOfSpaceship3(angle) {
                 )
             );
         }, 0);
-        timeToRespawnEnemy = 100;
-        minSizeEnemy = 20;
-        maxSizeEnemy = 100;
+        timeToRespawnEnemy = timeToRespawnLV6;
+        minSizeEnemy = minSizeEnemyLV6;
+        maxSizeEnemy = maxSizeEnemyLV6;
     }
 }
 
@@ -2673,6 +2731,10 @@ addEventListener('mousemove', (e) => {
 window.addEventListener('mouseout', () => {
     mouse.x = undefined;
     mouse.x = undefined;
+    isUP = false;
+    isDOWN = false;
+    isRIGHT = false;
+    isLEFT = false;
 });
 
 // event bắn đạn
@@ -2696,6 +2758,9 @@ window.addEventListener('click', function (e) {
         } else if (typeOfSpaceShip == 3) {
             proOfSpaceship3(angle);
         }
+    } else {
+        INTROCLICK.play();
+        INTROCLICK.currentTime = 0;
     }
 });
 
@@ -2707,7 +2772,8 @@ button.addEventListener('click', () => {
     spawnEnemy(minSizeEnemy, maxSizeEnemy); // tạo quân địch
     animateAround();
     isStart = true;
-    isDead = false
+    isDead = false;
+    gameOverOpacity = 0;
     particleIntroArray = [];
     cancelAnimationFrame(animateIntroID);
 });
@@ -2725,7 +2791,8 @@ buttonRestart.addEventListener('click', () => {
     health = 1000;
     navigate.x = center.x;
     navigate.y = center.y;
-    isDead = false
+    isDead = false;
+    gameOverOpacity = 0;
     // animate()
 
     // animationId.start()
@@ -2737,7 +2804,14 @@ spaceShip1.addEventListener('click', () => {
     spaceShip2.style.border = '';
     spaceShip3.style.border = '';
     typeOfSpaceShip = 1;
+    HOVERBTN.play();
+    HOVERBTN.currentTime = 0;
 });
+
+// spaceShip1.addEventListener('mouseover', () => {
+// HOVERBTN.play()
+// HOVERBTN.currentTime = 0
+// })
 
 spaceShip2.addEventListener('click', () => {
     spaceshipImg.src = './img/spaceship2.png'; //gán link ảnh tau 2
@@ -2745,7 +2819,14 @@ spaceShip2.addEventListener('click', () => {
     spaceShip1.style.border = '';
     spaceShip3.style.border = '';
     typeOfSpaceShip = 2;
+    HOVERBTN.play();
+    HOVERBTN.currentTime = 0;
 });
+
+// spaceShip2.addEventListener('mouseover', () => {
+//     HOVERBTN.play()
+//     HOVERBTN.currentTime = 0
+// })
 
 spaceShip3.addEventListener('click', () => {
     spaceshipImg.src = './img/spaceship3.png'; //gán link ảnh tau 3
@@ -2753,7 +2834,14 @@ spaceShip3.addEventListener('click', () => {
     spaceShip2.style.border = '';
     spaceShip1.style.border = '';
     typeOfSpaceShip = 3;
+    HOVERBTN.play();
+    HOVERBTN.currentTime = 0;
 });
+
+// spaceShip3.addEventListener('mouseover', () => {
+//     HOVERBTN.play()
+//     HOVERBTN.currentTime = 0
+// })
 
 exitBtn.addEventListener('click', () => {
     // spaceShip1.style.display = 'block'
@@ -2810,17 +2898,40 @@ document.addEventListener('keydown', (e) => {
 });
 document.addEventListener('keyup', (e) => {
     setTimeout(() => {
-        if (e.keyCode == 87 || e.keyCode == 38) {
-            isUP = false;
-        }
-        if (e.keyCode == 83 || e.keyCode == 40) {
-            isDOWN = false;
-        }
-        if (e.keyCode == 68 || e.keyCode == 37) {
-            isRIGHT = false;
-        }
-        if (e.keyCode == 65 || e.keyCode == 39) {
-            isLEFT = false;
+        e.timeStamp = 0;
+        switch (e.keyCode) {
+            case 38: {
+                isUP = false;
+                break;
+            }
+            case 87: {
+                isUP = false;
+                break;
+            }
+            case 40: {
+                isDOWN = false;
+                break;
+            }
+            case 83: {
+                isDOWN = false;
+                break;
+            }
+            case 39: {
+                isRIGHT = false;
+                break;
+            }
+            case 68: {
+                isRIGHT = false;
+                break;
+            }
+            case 37: {
+                isLEFT = false;
+                break;
+            }
+            case 65: {
+                isLEFT = false;
+                break;
+            }
         }
     }, 0);
 });
