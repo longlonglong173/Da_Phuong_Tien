@@ -19,63 +19,73 @@ const scoreBox = document.getElementById('score'); //element hiển thị điể
 const button = document.getElementById('btn'); //nút bắt đầu hoặc kết thúc game
 const buttonRestart = document.getElementById('btn-restart');  //nút restart
 var score = 0; //biến tính điểm
-var dmgLocal = 5;
+var dmgLocal = 5;  // sát thương của tàu
 var isStart = false;
 var isDead = true;
-const degree = Math.PI / 180;
-let spaceshipImg = document.getElementById('playerImg');
-var isUppingLevel = false;
+const degree = Math.PI / 180;   // chuyển từ độ sang radians
+let spaceshipImg = document.getElementById('playerImg');  //tàu vũ trụ
+var isUppingLevel = false;  //
 let angleM = -90 * (Math.PI / 180); // góc xoay của đường đạn so với trục x
-let health = 1000;
+let health = 1000;  //số HP hiện tại của tàu
 const maxHealthWidth = maxHealthBar.offsetWidth; //lấy chiều dài lớn nhất của thanh máu
-console.log('health: ' + maxHealthWidth);
-let timeToRespawnEnemy = 500;
-let intervalEnemy;
 
-spaceshipImg.src = 'img/spaceship1.png';
-let typeOfSpaceShip = 1;
-const spaceShip1 = document.getElementById('spaceShip1');
-const spaceShip2 = document.getElementById('spaceShip2');
-const spaceShip3 = document.getElementById('spaceShip3');
-const exitBtn = document.getElementById('exit-btn');
-let particleIntroArray = [];
-let adjustX = 12;
-let adjustY = 12;
-let animateIntroID;
-let firstClick = false;
+spaceshipImg.src = 'img/spaceship1.png';  //gán đường dẫn ảnh tàu vũ trụ
+let typeOfSpaceShip = 1;  // biến này dùng để lưu xem người chơi chọn loại tàu nào
+const spaceShip1 = document.getElementById('spaceShip1');  // trả về phần tử có thuộc tính ID là spaceship1
+const spaceShip2 = document.getElementById('spaceShip2');   //
+const spaceShip3 = document.getElementById('spaceShip3');  // 
+const exitBtn = document.getElementById('exit-btn');         //
+
+let particleIntroArray = [];  // mảng lưu trữ những viên thành phần tạo nên chữ Welcome ở phần mở đầu
+let adjustX = 12;   // điều chỉnh độ giãn của phần tử tạo nên chữ Welcome theo trục X
+let adjustY = 12;   //
+let animateIntroID;  // biến lưu giá trị của requestAnimationFrame, sau đó để ngắt nó
 let clickCount = 0;
 let boxPosY = 100; // %vị trí xuất hiện của bảng chọn bắt đầu
 let healthBarPosY = -30; // vị trí xuất hiện của thanh máu, điểm, nút thoát
-let canvasPosY = -100;
-let particlesIntroShapeArray;
-let gameOverOpacity = 0;
-let isPlayIntroSound = false;
-const bgSound = document.getElementById('bgSound');
-let timeToRespawnLV1 = 450;
-let timeToRespawnLV2 = 400;
-let timeToRespawnLV3 = 350;
-let timeToRespawnLV4 = 300;
-let timeToRespawnLV5 = 200;
-let timeToRespawnLV6 = 100;
+let canvasPosY = -100;   // vị trí xuất hiện của canvas, biến này dùng để tạo hiệu ứng di chuyển từ trên xuống dưới khi bắt đầu game 
+let particlesIntroShapeArray;  //mảng dùng để lưu viên hiệu ứng hình tinh thể ở đầu game 
+let gameOverOpacity = 0;  // lưu độ rõ nét của ảnh lúc gameover
+let isPlayIntroSound = false;  //lưu xem đã phát nhạc đầu game chưa
+let isPlayPopNavIntroSound = false //
+const bgSound = document.getElementById('bgSound'); //trả về phần tử có thuộc tính ID là bgSound. phần tử này dùng để lưu nhạc nền 
 
-let minSizeEnemyLV1 = 9;
-let minSizeEnemyLV2 = 11;
-let minSizeEnemyLV3 = 13;
-let minSizeEnemyLV4 = 15;
-let minSizeEnemyLV5 = 17;
-let minSizeEnemyLV6 = 20;
+let intervalEnemy;   // biến này dùng để lưu giá trị interval trong quá trình tạo quân địch
+let timeToRespawnEnemy = 500;  // chu kì tạo quân địch
+let timeToRespawnLV1 = 450; //chu kì tạo quân địch ...
+let timeToRespawnLV2 = 400; //
+let timeToRespawnLV3 = 350; //
+let timeToRespawnLV4 = 300; //
+let timeToRespawnLV5 = 200; //
+let timeToRespawnLV6 = 100; //
 
-let maxSizeEnemyLV1 = 34;
-let maxSizeEnemyLV2 = 38;
-let maxSizeEnemyLV3 = 42;
-let maxSizeEnemyLV4 = 46;
-let maxSizeEnemyLV5 = 50;
-let maxSizeEnemyLV6 = 54;
+let minSizeEnemy = 7;       //
+let minSizeEnemyLV1 = 9;    // 
+let minSizeEnemyLV2 = 11;   //
+let minSizeEnemyLV3 = 13;   //
+let minSizeEnemyLV4 = 15;   //
+let minSizeEnemyLV5 = 17;   //
+let minSizeEnemyLV6 = 20;   //
+
+let maxSizeEnemy = 30;      //
+let maxSizeEnemyLV1 = 34;   //
+let maxSizeEnemyLV2 = 38;   //
+let maxSizeEnemyLV3 = 42;   //
+let maxSizeEnemyLV4 = 46;   //
+let maxSizeEnemyLV5 = 50;   //
+let maxSizeEnemyLV6 = 54;   //
+
+
+let isUP = false;
+let isDOWN = false;
+let isRIGHT = false;
+let isLEFT = false;
 
 ctx.font = 'bold 17px Verdana'; //định dạng font chữ
 ctx.fillText('WELCOME', 0, 40); // viết nội dung
 const data = ctx.getImageData(0, 0, canvas.width, canvas.height); // láy nội dung của chữ để xử lý
 
+//hàm chức năng dùng để cập nhật và quay tàu theo hướng của chuột
 function drawRotated(degrees) {
     ctx.save();
     ctx.translate(navigate.x, navigate.y);
@@ -83,13 +93,11 @@ function drawRotated(degrees) {
     ctx.drawImage(spaceshipImg, -30, -30, 60, 60);
     ctx.restore();
 }
-let minSizeEnemy = 7;
-let maxSizeEnemy = 30;
 
 // âm thanh
-const SHOOT = new Audio();
-SHOOT.src = './sound/shoot.wav';
-SHOOT.volume = 0.2;
+const SHOOT = new Audio();      //tạo âm thanh 
+SHOOT.src = './sound/shoot.wav';    //gán đượng dẫn cho audio
+SHOOT.volume = 0.2; //chỉnh âm lượng
 
 const HIT = new Audio();
 HIT.src = './sound/hit.wav';
@@ -125,27 +133,37 @@ HOVERBTN.volume = 0.5;
 
 const INTROCLICK = new Audio();
 INTROCLICK.src = './sound/introClick.wav';
+INTROCLICK.volume = 0.5
 
+const POPNAVINTRO = new Audio()
+POPNAVINTRO.src = './sound/popNavIntro.wav'
+POPNAVINTRO.volume = 0.5
+
+//tạo 1 object lưu vị trí khi di chuột
 let mouse = {
     x: null,
     y: null,
-    radius: 100,
+    radius: 100,  //tầm ảnh hưởng của chuột ở đầu game
 };
+
+// tạo đối tượng lưu vị trí giữa màn hình
 const center = {
     x: canvas.width / 2,
     y: canvas.height / 2,
-    radius: 60,
+    radius: 60, //lưu bán kính của tàu
     autopilotAngle: 0, // góc xoay tự động
 };
 
+// tạo đối tượng lưu vị trí của tàu
 const navigate = {
     x: canvas.width / 2,
     y: canvas.height / 2,
 };
-let posX = canvas.width / 2;
+
+let posX = canvas.width / 2;   //lưu vị trí giữa màn hình để thực hiện hiệu ứng, biến này thay đổi được, khác với đối tượng center bên trên 
 let posY = canvas.height / 2;
 
-const colors = ['#00bdff', '#4d39ce', '#088eff'];
+const colors = ['#00bdff', '#4d39ce', '#088eff'];  //lưu mảng màu của hiệu ứng background sao vũ trụ
 
 // khai báo class người chơi
 class Player {
@@ -159,9 +177,9 @@ class Player {
         this.x = navigate.x;
         this.y = navigate.y;
     }
+}
 
     //tạo animation space với trung tâm là người chơi
-}
 function animateAround() {
     for (let i = 0; i < 300; i++) {
         const radius = Math.random() * 2 + 1;
@@ -182,8 +200,8 @@ class Projectile {
         this.x = x;
         this.y = y;
         this.radius = radius; // bán kính
-        this.color = color;
-        this.velocity = velocity; // hướnghướng
+        this.color = color;     //màu sắc
+        this.velocity = velocity; // hướng
     }
     draw() {
         ctx.beginPath();
@@ -207,9 +225,9 @@ class Enemy {
         this.radius = radius;
         this.color = color;
         this.velocity = velocity;
-        this.oldPosX = navigate.x;
-        this.oldPosY = navigate.y;
-        this.point = this.radius;
+        this.oldPosX = navigate.x;  // lưu vết lại vị trí ban đầu
+        this.oldPosY = navigate.y;  //
+        this.point = this.radius;   //để tính điểm khi bắn nổ quân địch 
     }
     draw() {
         ctx.beginPath();
@@ -217,7 +235,6 @@ class Enemy {
         ctx.fillStyle = this.color;
         ctx.fill();
     }
-
     update() {
         this.draw();
         this.x = this.x + this.velocity.x;
@@ -336,14 +353,15 @@ class LevelUpParticle {
     }
 }
 
+// tạo viên thành phần của hiệu ứng chữ ban đầu
 class ParticleIntroText {
     constructor(x, y) {
-        (this.x = x + 180),
-            (this.y = y - 140),
-            (this.size = 3),
-            (this.baseX = this.x),
-            (this.baseY = this.y),
-            (this.density = Math.random() * 30 + 1);
+        (this.x = x + 180),  //vị trí
+        (this.y = y - 140), //
+        (this.size = 3),    //kích thước viên thành phần
+        (this.baseX = this.x),//vị trí ban đầu 
+        (this.baseY = this.y),//
+        (this.density = Math.random() * 30 + 1)  //tỉ 
     }
     draw() {
         ctx.fillStyle = 'white';
@@ -353,12 +371,12 @@ class ParticleIntroText {
         ctx.fill();
     }
     update() {
-        let dx = mouse.x - this.x;
-        let dy = mouse.y - this.y;
+        let dx = mouse.x - this.x;  //khoảng cách trục x giữa con trỏ và viên đang xét
+        let dy = mouse.y - this.y;  //
         let distance = Math.sqrt(dx * dx + dy * dy); //khoảng cách giữa con trỏ và viên đag xét
-        let forceDirectionX = dx / distance;
-        let forceDirectionY = dy / distance;
-        var maxDistance = mouse.radius;
+        let forceDirectionX = dx / distance;    //
+        let forceDirectionY = dy / distance;    //
+        var maxDistance = mouse.radius;         //
         var force = (maxDistance - distance) / maxDistance;
         if (force < 0) force = 0;
         let directionX = forceDirectionX * force * this.density;
@@ -380,6 +398,7 @@ class ParticleIntroText {
     }
 }
 
+// hiệu ứng tinh thể ban đầu 
 class ParticleIntroShape {
     constructor(x, y, directionX, directionY, size, color) {
         this.x = x;
@@ -389,27 +408,22 @@ class ParticleIntroShape {
         this.size = size;
         this.color = color;
     }
-    // method to draw individual particle
     draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
         ctx.fillStyle = '#8C5523';
         ctx.fill();
     }
-    // check particle position, check mouse position, move the particle, draw the particle
     update() {
-        //check if particle is still within canvas
         if (this.x > canvas.width || this.x < 0) {
             this.directionX = -this.directionX;
         }
         if (this.y > canvas.height || this.y < 0) {
             this.directionY = -this.directionY;
         }
-
-        //check collision detection - mouse position / particle position
-        let dx = mouse.x - this.x;
-        let dy = mouse.y - this.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
+        let dx = mouse.x - this.x;  //khoảng cách theo trục X từ con trỏ đến viên đang xét
+        let dy = mouse.y - this.y;  //
+        let distance = Math.sqrt(dx * dx + dy * dy);    //khoảng cách từ con trỏ đến viên đang xét
         if (distance < mouse.radius + this.size) {
             if (mouse.x < this.x && this.x < canvas.width - this.size * 10) {
                 this.x += 10;
@@ -424,10 +438,8 @@ class ParticleIntroShape {
                 this.y -= 10;
             }
         }
-        // move particle
-        this.x += this.directionX;
-        this.y += this.directionY;
-        // draw particle
+        this.x += this.directionX;  //cập nhật lại vị trí mới của vector thành phần theo trục X 
+        this.y += this.directionY;  //
         this.draw();
     }
 }
@@ -567,10 +579,12 @@ function initIntro() {
 initIntro();
 animateIntro();
 
+//nối các viên hiệu ứng chữ ban đầu
 function connect() {
-    let opacityValue = 1;
+    let opacityValue = 1;   //độ rõ nét của nét nối
     for (let a = 0; a < particleIntroArray.length; a++) {
         for (let b = a; b < particleIntroArray.length; b++) {
+            //tính khảong cách giữa 2 viên dang xét 
             let distance =
                 (particleIntroArray[a].x - particleIntroArray[b].x) *
                     (particleIntroArray[a].x - particleIntroArray[b].x) +
@@ -578,10 +592,10 @@ function connect() {
                     (particleIntroArray[a].y - particleIntroArray[b].y);
 
             if (distance < 2600) {
-                opacityValue = 1 - distance / 2600;
-                let dx = mouse.x - particleIntroArray[a].x;
-                let dy = mouse.y - particleIntroArray[a].y;
-                let mouseDistance = Math.sqrt(dx * dx + dy * dy);
+                opacityValue = 1 - distance / 2600;  // 
+                let dx = mouse.x - particleIntroArray[a].x; //vector thành phần
+                let dy = mouse.y - particleIntroArray[a].y; //
+                let mouseDistance = Math.sqrt(dx * dx + dy * dy);   //khoảng cách giữa con trỏ và viên đang xét
                 if (mouseDistance < mouse.radius / 2) {
                     ctx.strokeStyle = 'rgba(255,255,0,' + opacityValue + ')';
                 } else if (mouseDistance < mouse.radius - 50) {
@@ -601,6 +615,7 @@ function connect() {
     }
 }
 
+// nối các viên hiệu ứng tinh thể 
 function connectShape() {
     let opacityValue = 1;
     for (let a = 0; a < particlesIntroShapeArray.length; a++) {
@@ -620,11 +635,12 @@ function connectShape() {
                 let dy = mouse.y - particlesIntroShapeArray[a].y;
                 let mouseDistance = Math.sqrt(dx * dx + dy * dy);
                 if (mouseDistance < 180) {
-                    ctx.strokeStyle = 'rgba(255,0,0,' + opacityValue + ')';
-                } else {
+                    ctx.strokeStyle = 'rgba(255,0,0,' + opacityValue + ')'; 
+                }
+                else {
                     ctx.strokeStyle = 'rgba(0,0,255,' + opacityValue + ')';
                 }
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 1;  //độ dày của đường nối
                 ctx.beginPath();
                 ctx.moveTo(
                     particlesIntroShapeArray[a].x,
@@ -637,7 +653,7 @@ function connectShape() {
                 ctx.stroke();
 
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = 'rgba(255,255,0,0.03)';
+                ctx.strokeStyle = 'rgba(255,255,0,0.03)';   //vẽ đường nối giữa  con trỏ và các điểm
                 ctx.beginPath();
                 ctx.moveTo(mouse.x, mouse.y);
                 ctx.lineTo(
@@ -652,29 +668,34 @@ function connectShape() {
 
 let animationId, animationId1;
 let levelScore = 1000; //mốc điểm cần đạt
+//nôi dung trong màng hình lúc chơi game
 function animate1() {
     // hiệu ứng lúc chết
     if (isDead) {
-        bgSound.pause();
-        bgSound.currentTime = 0;
-        enemies = [];
-        projectiles = [];
-        navigate.x = canvas.width / 2;
-        navigate.y = canvas.height / 2;
+        bgSound.pause();    //tạm dừng nhạc 
+        bgSound.currentTime = 0;    // cho độ dài nhạc bằng 0 để chạy nhạc khác khi chết
+        enemies = [];   //khởi tạo lại  mảng quân địch 
+        projectiles = [];   // khởi tạo lại mảng những viên đạn
+        navigate.x = canvas.width / 2;  //reset lại vị vị trí của tàu về giữa màn hình
+        navigate.y = canvas.height / 2; //
         if (gameOverOpacity <= 1) {
-            gameOverOpacity += 0.005;
-            box.style.opacity = gameOverOpacity;
+            gameOverOpacity += 0.005;   //tăng dần độ rõ nét của ảnh nền khi game over
+            box.style.opacity = gameOverOpacity;    //gán độ rõ nét 
         }
         cancelAnimationFrame(animationId); // dừng frame
     }
-    //hiển thị thanh máu
+
+    //hiển thị thanh máu, 
     if (healthBarPosY <= 20 && health >= 0) {
+        //trượt từ ngoài vào trong màn hình 
+        //biến healthBarPosY - vị trí thanh máu theo trục  Y 
         let tmp = healthBarPosY + 'px';
         maxHealthBar.style.top = tmp;
         scoreLabelX.style.top = tmp;
         exitBtn.style.top = tmp;
         healthBarPosY++;
     } else if (healthBarPosY > -30 && health < 0) {
+        //trượt từ trong màn hình ra ngoài 
         let tmp = healthBarPosY + 'px';
         maxHealthBar.style.top = tmp;
         scoreLabelX.style.top = tmp;
@@ -744,21 +765,21 @@ function animate1() {
                 scoreBox.innerHTML = score; //set text cho số điểm
                 score = 0; //reset lại số điểm
                 isStart = false;
-                spaceShip1.style.display = 'none';
+                spaceShip1.style.display = 'none';  //ẩn đi phần chọn máy bay 
                 spaceShip2.style.display = 'none';
                 spaceShip3.style.display = 'none';
-                textBox.style.display = 'block';
-                scoreBox.style.display = 'block';
-                navBox.style.backgroundColor = 'rgba(255,255,255, 0.5)';
-                navBox.style.color = 'black';
-                navBox.style.border = '#333 solid 2px';
-                box.style.top = '0';
+                textBox.style.display = 'block';    //hiển thị điểm lúc game over 
+                scoreBox.style.display = 'block';   //
+                navBox.style.backgroundColor = 'rgba(255,255,255, 0.5)';    //màu nền của box
+                navBox.style.color = 'black';   //màu chữ khi hiển thị điểm 
+                navBox.style.border = '#333 solid 2px'; //viền của box
+                box.style.top = '0';    //
                 isDead = true;
                 box.style.opacity = 0;
                 box.style.backgroundSize =
-                    canvas.width + 'px ' + canvas.height + 'px';
-                box.style.backgroundImage = "url('./img/gameOver.png')";
-                GAMEOVER.play();
+                    canvas.width + 'px ' + canvas.height + 'px'; // kéo dãn ảnh vừa với kích thước màn hình
+                box.style.backgroundImage = "url('./img/gameOver.png')";    //gán đường dẫn dảnh 
+                GAMEOVER.play();    //phát nhạc
             } else {
                 // va chạm vơi người chơi
                 PLAYERHIT.play();
@@ -826,10 +847,8 @@ function animate1() {
     }
 }
 
+//hiệu ứng lúc levelup 
 function animate2() {
-    //thực hiện hiệu ứng chuyển level
-    // animationId2 = requestAnimationFrame(animate2);
-    console.log('run level up');
     LEVELUP.play();
     projectiles = [];
     enemies = [];
@@ -849,7 +868,7 @@ function animate2() {
             }
         }
         handleOverlap();
-        hue += 2;
+        hue += 2;   //thay đổi màu 
         //rotate
         posX += radiusRatate * Math.sin(angleRotate);
         posY += radiusRatate * Math.cos(angleRotate);
@@ -864,12 +883,10 @@ function animate2() {
     ) {
         // cancelAnimationFrame(animationId2)
         isUppingLevel = false;
-        posX = canvas.width / 2;
+        posX = canvas.width / 2;    //trả về vị trí giữa màn hình
         posY = canvas.height / 2;
-        center.x = canvas.width / 2;
-        center.y = canvas.height / 2;
         angleRotate = 0;
-        radiusRatate = 0;
+        radiusRatate = 0;   //reset lại cánh tay đòn (bán kính quay)
     }
 }
 function animate() {
@@ -890,28 +907,38 @@ function animate() {
     animationId = requestAnimationFrame(animate);
 }
 
+//hiệu ứng lúc đầu game
 function animateIntro() {
     if (!isPlayIntroSound) {
-        INTRO.play();
+        let tmp = INTRO.play();
         isPlayIntroSound = true;
     }
-    ctx.clearRect(0, 0, innerWidth, innerHeight);
-    connect();
-    for (let i = 0; i < particleIntroArray.length; i++) {
-        particleIntroArray[i].update();
-        particleIntroArray[i].draw();
+    if (!isPlayPopNavIntroSound && clickCount == 1) {
+        POPNAVINTRO.play()
+        isPlayPopNavIntroSound = true
+        INTRO.pause()
     }
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
     //trong lần click đầu tiên thì sẽ di chuyển các phím chức năng lên
     if (boxPosY >= 30 && clickCount > 0) {
         let tmp = boxPosY + '%';
         box.style.top = tmp;
-        boxPosY--;
+        boxPosY -= 0.7;
     }
     if (canvasPosY < 0) {
         canvasPosY += 0.5;
         let tmp = canvasPosY + '%';
         canvas.style.top = tmp;
     }
+
+    //tạo hiệu ứng chữ ban đầu
+    for (let i = 0; i < particleIntroArray.length; i++) {
+        particleIntroArray[i].update();
+        particleIntroArray[i].draw();
+    }
+    connect();
+
+    //tạo hiệu ứng tinh thể ban đầu 
     for (let i = 0; i < particlesIntroShapeArray.length; i++) {
         particlesIntroShapeArray[i].update();
     }
@@ -2725,14 +2752,15 @@ function proOfSpaceship3(angle) {
 
 //lấy tọa độ chuột để quay tàu theo hướng chuột
 addEventListener('mousemove', (e) => {
-    const angle = Math.atan2(e.clientY - navigate.y, e.clientX - navigate.x); // góc giữu đường đạn và trục x
-    angleM = angle + Math.PI / 2;
-    mouse.x = e.clientX;
+    const angle = Math.atan2(e.clientY - navigate.y, e.clientX - navigate.x); // góc giữa đường đạn và trục x
+    angleM = angle + Math.PI / 2;   // góc xoay của tàu
+    mouse.x = e.clientX;    // cập nhật tọa độ của chuột
     mouse.y = e.clientY;
 });
 
+//sư kiện đưa chuột ra khỏi màn hình 
 window.addEventListener('mouseout', () => {
-    mouse.x = undefined;
+    mouse.x = undefined;    
     mouse.x = undefined;
     isUP = false;
     isDOWN = false;
@@ -2742,14 +2770,9 @@ window.addEventListener('mouseout', () => {
 
 // event bắn đạn
 window.addEventListener('click', function (e) {
-    //tính góc của đường đạn so với trục x
     clickCount++;
-    if (clickCount == 1) {
-        firstClick = true;
-    } else {
-        firstClick = false;
-    }
     if (isStart == true) {
+        //tính góc của đường đạn so với trục x
         const angle = Math.atan2(
             e.clientY - navigate.y,
             e.clientX - navigate.x
@@ -2762,6 +2785,7 @@ window.addEventListener('click', function (e) {
             proOfSpaceship3(angle);
         }
     } else {
+        //tiếng click khi ở màn chờ hoặc game over
         INTROCLICK.play();
         INTROCLICK.currentTime = 0;
     }
@@ -2773,13 +2797,13 @@ button.addEventListener('click', () => {
     box.style.display = 'none'; // ẩn box khi bấm nút
     animate(); // bắt đầu hiệu ứng chính  cúa game\
     spawnEnemy(minSizeEnemy, maxSizeEnemy); // tạo quân địch
-    animateAround();
+    animateAround();    // tạo hiệu ứng sao vũ trụ
     isStart = true;
     isDead = false;
-    gameOverOpacity = 0;
-    particleIntroArray = [];
-    cancelAnimationFrame(animateIntroID);
+    gameOverOpacity = 0;    //reset lại độ rõ nét của backgorund lúc gameover
+    cancelAnimationFrame(animateIntroID);   //hủy bỏ animationFarme của animate1 tức là ngắt cái animate1 
 });
+
 //nút restart
 buttonRestart.addEventListener('click', () => {
     init();
@@ -2788,26 +2812,23 @@ buttonRestart.addEventListener('click', () => {
     enemies = [];
     particles = [];
     // particles2 = []
-    currentHealthBar.style.width = maxHealthWidth;
+    currentHealthBar.style.width = maxHealthWidth;  // cập nhật lại độ dài thanh máu
     isStart = true;
-    animateAround();
-    health = 1000;
-    navigate.x = center.x;
-    navigate.y = center.y;
+    animateAround();    // chạy hiệu ứng sao vũ trụ
+    health = 1000;      //khôi phục lượng máu về max 
+    navigate.x = center.x;  // reset lại vị trí của tàu về giữa màn hình 
+    navigate.y = center.y;  //
     isDead = false;
-    gameOverOpacity = 0;
-    // animate()
-
-    // animationId.start()
+    gameOverOpacity = 0;    //reset lại độ rõ nét của backgorund lúc gameover
 });
 
 spaceShip1.addEventListener('click', () => {
     spaceshipImg.src = './img/spaceship1.png'; //gán link ảnh tau 1
-    spaceShip1.style.border = 'solid 1px orange';
+    spaceShip1.style.border = 'solid 1px orange';   // tạo đường viền cho cais mình chọn 
     spaceShip2.style.border = '';
     spaceShip3.style.border = '';
     typeOfSpaceShip = 1;
-    HOVERBTN.play();
+    HOVERBTN.play();    //phát nhạc
     HOVERBTN.currentTime = 0;
 });
 
@@ -2846,29 +2867,24 @@ spaceShip3.addEventListener('click', () => {
 //     HOVERBTN.currentTime = 0
 // })
 
+//sư kiện nút exit
 exitBtn.addEventListener('click', () => {
-    // spaceShip1.style.display = 'block'
-    // spaceShip2.style.display = 'block'
-    // spaceShip3.style.display = 'block'
-    // isStart = false
     window.location.reload();
 });
 
-let isUP = false;
-let isDOWN = false;
-let isRIGHT = false;
-let isLEFT = false;
-
+//sự kiện bấm  phím 
 document.addEventListener('keydown', (e) => {
     console.log(e.code);
     setTimeout(() => {
         e.timeStamp = 0;
         switch (e.keyCode) {
             case 38: {
+                //lên 
                 isUP = true;
                 break;
             }
             case 87: {
+                //W
                 isUP = true;
                 break;
             }
@@ -2899,6 +2915,8 @@ document.addEventListener('keydown', (e) => {
         }
     }, 0);
 });
+
+// không bấm phím nữa 
 document.addEventListener('keyup', (e) => {
     setTimeout(() => {
         e.timeStamp = 0;
